@@ -1,0 +1,42 @@
+import pandas as pd
+import os
+
+# RAW DATASET (your original file)
+RAW_PATH = r"C:\Users\acer\Downloads\aqi.csv"
+
+# ✅ SAVE INSIDE YOUR EXISTING PROJECT DATASET FOLDER
+OUTPUT_PATH = r"C:\Users\acer\Air Pollution\Backend\Dataset\aqi_timeseries.csv"
+
+def preprocess():
+    df = pd.read_csv(RAW_PATH)
+
+    # Rename columns
+    df = df.rename(columns={
+        "area": "city",
+        "aqi_value": "aqi"
+    })
+
+    # Convert date
+    df["date"] = pd.to_datetime(df["date"], dayfirst=True, errors="coerce")
+
+    # Keep only required columns
+    df = df[["date", "city", "aqi"]]
+
+    # Clean
+    df = df.dropna()
+    df = df.sort_values(["city", "date"])
+
+    # Ensure Dataset folder exists
+    os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
+
+    # Save
+    df.to_csv(OUTPUT_PATH, index=False)
+
+    print("✅ AQI time-series dataset saved successfully")
+    print("📁 Location:", OUTPUT_PATH)
+    print("📅 Date range:", df["date"].min(), "→", df["date"].max())
+    print("🏙️ Cities:", df["city"].nunique())
+    print("📊 Total records:", len(df))
+
+if __name__ == "__main__":
+    preprocess()
