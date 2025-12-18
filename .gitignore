@@ -1,0 +1,10 @@
+_pycache_/
+*.pyc
+
+*.pkl
+Backend/models/
+Backend/forecasting/saved_models/
+
+Backend/Dataset/
+
+.env
