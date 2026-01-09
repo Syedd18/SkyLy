@@ -2,3 +2,7 @@ fastapi
 uvicorn
 pandas
 requests
+passlib[bcrypt]
+python-jose[cryptography]
+python-multipart
+reportlab
