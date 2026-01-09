@@ -24,7 +24,7 @@ random.seed(SEED)
 
 # ------------ CONFIG ------------
 
-CSV_PATH = r"C:\Users\acer\Air Pollution\Backend\Dataset\AQI_prediction_dataset.csv"
+CSV_PATH = r"C:\Users\acer\Air Pollution\Backend\Dataset\city_day.csv"
 MODELS_DIR = r"C:\Users\acer\Air Pollution\Backend\models"
 
 SEQ_LEN = 30      # days of history

@@ -1,6 +1,7 @@
 _pycache_/
 *.pyc
 
+# Prevent committing large model artifacts
 *.pkl
 Backend/models/
 Backend/forecasting/saved_models/
