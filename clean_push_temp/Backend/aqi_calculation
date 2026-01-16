@@ -1,0 +1,39 @@
+import numpy as np
+
+# Standard breakpoints for AQI calculation (India CPCB standard)
+BREAKPOINTS = {
+    "PM2.5": [(0, 30, 0, 50), (31, 60, 51, 100), (61, 90, 101, 200),
+              (91, 120, 201, 300), (121, 250, 301, 400), (251, 500, 401, 500)],
+    
+    "PM10": [(0, 50, 0, 50), (51, 100, 51, 100), (101, 250, 101, 200),
+             (251, 350, 201, 300), (351, 430, 301, 400), (431, 1000, 401, 500)],
+}
+
+def compute_individual_aqi(concentration, pollutant):
+    """Computes AQI contribution for one pollutant."""
+    if pollutant not in BREAKPOINTS:
+        return None
+
+    for bp_low, bp_high, aqi_low, aqi_high in BREAKPOINTS[pollutant]:
+        if bp_low <= concentration <= bp_high:
+            return ((aqi_high - aqi_low) / (bp_high - bp_low)) * (concentration - bp_low) + aqi_low
+
+    return None
+
+def calculate_aqi(df):
+    """Adds an improved corrected AQI column."""
+    corrected_values = []
+
+    for _, row in df.iterrows():
+        sub_indices = []
+
+        for pollutant in ["PM2.5", "PM10"]:
+            if pollutant in row and not np.isnan(row[pollutant]):
+                aqi_val = compute_individual_aqi(row[pollutant], pollutant)
+                if aqi_val is not None:
+                    sub_indices.append(aqi_val)
+
+        corrected_values.append(max(sub_indices) if sub_indices else np.nan)
+
+    df["AQI_corrected"] = corrected_values
+    return df

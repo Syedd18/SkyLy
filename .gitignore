@@ -1,0 +1,52 @@
+# Root .gitignore for the Air Pollution project
+
+# Node / Frontend
+node_modules/
+frontend-new/node_modules/
+frontend-new/.next/
+frontend-new/.turbo/
+frontend-new/.vercel/
+
+# Next.js build outputs
+/.next/
+/out/
+/build/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pkl
+*.db
+venv/
+env/
+
+# Backend models and large artifacts
+Backend/models/
+Backend/models/*.pkl
+Backend/*.db
+
+# IDEs and OS
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment
+.env
+.env.*
+_pycache_/
+*.pyc
+
+# Prevent committing large model artifacts
+*.pkl
+Backend/models/
+Backend/forecasting/saved_models/
+
+Backend/Dataset/
+
+.env
