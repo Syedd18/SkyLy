@@ -1,4 +1,0 @@
-# .gitattributes
-# Model files are intentionally NOT tracked in this repository.
-# Keep large model artifacts outside git and list them in docs/REMOVE_MODELS.md
-
