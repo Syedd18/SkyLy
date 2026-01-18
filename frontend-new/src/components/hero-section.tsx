@@ -15,7 +15,8 @@ interface HeroSectionProps {
   onSelectedStationChange?: (station: any | null) => void
 }
 
-const API_BASE_URL = "http://127.0.0.1:8000"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || ""
+const api = (path: string) => (API_BASE_URL ? `${API_BASE_URL}${path}` : path)
 
 function getAQICategory(aqi: number) {
   if (aqi <= 50) return { label: "Good", color: "bg-green-500", colorHex: '#22c55e' }
@@ -72,7 +73,7 @@ export function HeroSection({
     // Fetch cities from API
     const fetchCities = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/cities`)
+        const response = await fetch(api('/cities'))
         if (response.ok) {
           const citiesData = await response.json()
           setCities(citiesData)
@@ -91,7 +92,7 @@ export function HeroSection({
       if (!location) return
       setSatLoading(true)
       try {
-        const res = await fetch(`${API_BASE_URL}/satellite/live?city=${encodeURIComponent(location)}`)
+        const res = await fetch(api(`/satellite/live?city=${encodeURIComponent(location)}`))
         if (res.ok) {
           const data = await res.json()
           setSatellite(data)
@@ -120,7 +121,7 @@ export function HeroSection({
       }
       setStationsLoading(true)
       try {
-        const res = await fetch(`${API_BASE_URL}/live/aqi/stations?city=${encodeURIComponent(location)}`)
+        const res = await fetch(api(`/live/aqi/stations?city=${encodeURIComponent(location)}`))
         if (res.ok) {
           const data = await res.json()
           const stations = data.stations || []
