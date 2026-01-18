@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { MapPin } from "lucide-react"
 
-const API_BASE_URL = "http://127.0.0.1:8000"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || ""
+const api = (path: string) => (API_BASE_URL ? `${API_BASE_URL}${path}` : path)
 
 function getAQICategory(aqi: number) {
   if (aqi <= 50) return { label: "Good", color: "bg-green-500", colorHex: '#22c55e' }
@@ -38,7 +39,7 @@ export function StationsList({ city }: { city: string }) {
       setLoading(true)
       setError(null)
       try {
-        const res = await fetch(`${API_BASE_URL}/live/aqi/stations?city=${encodeURIComponent(city)}`)
+        const res = await fetch(api(`/live/aqi/stations?city=${encodeURIComponent(city)}`))
         if (res.ok) {
           const data = await res.json()
           setStations((data && (data.stations || data)) || [])
