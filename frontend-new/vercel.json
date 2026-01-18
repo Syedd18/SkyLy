@@ -1,0 +1,10 @@
+{
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://skyly-2.onrender.com/api/$1" }
+  ],
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_API_URL": "https://skyly-2.onrender.com"
+    }
+  }
+}
