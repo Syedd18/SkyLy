@@ -14,7 +14,7 @@ import numpy as np
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Import authentication module
-from auth import (
+from Backend.auth import (
     UserRegister, UserLogin, Token, UserProfile,
     create_access_token, get_current_user, get_current_user_optional,
     verify_password, get_user_by_email, create_user,
