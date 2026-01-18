@@ -12,6 +12,7 @@ import base64
 from datetime import datetime, timedelta
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import os
 
 # Import authentication module
 from Backend.auth import (
@@ -35,7 +36,7 @@ app.add_middleware(
 
 # ---------------- CONSTANTS ----------------
 # Note: In production, use environment variables for tokens
-WAQI_TOKEN = "9fe0a55684bf08d8c8131b1cba6233542f86f55d"
+WAQI_TOKEN = os.getenv("WAQI_TOKEN", "9fe0a55684bf08d8c8131b1cba6233542f86f55d")
 
 # Open-Meteo Air Quality API base URL (no key for non-commercial) [web:449][web:538]
 OPEN_METEO_AIR_URL = "https://air-quality-api.open-meteo.com/v1/air-quality"
@@ -48,14 +49,9 @@ OPEN_METEO_HOURLY_VARS = (
 )
 
 # Path configuration
+# Use repo-root `Dataset/aqi_timeseries.csv` directly (no Backend subfolder)
 BASE_DIR = Path(__file__).parent
-# Primary CSV path inside the Backend package
-CSV_PATH = BASE_DIR / "Dataset" / "aqi_timeseries.csv"
-# Fallback: repo-root `Dataset/aqi_timeseries.csv` (some users keep dataset at project root)
-if not CSV_PATH.exists():
-    alt_path = BASE_DIR.parent / "Dataset" / "aqi_timeseries.csv"
-    if alt_path.exists():
-        CSV_PATH = alt_path
+CSV_PATH = BASE_DIR.parent / "Dataset" / "aqi_timeseries.csv"
 
 # ---------------- LOAD DATA ----------------
 # Ensure the Dataset folder and csv exist relative to this script
