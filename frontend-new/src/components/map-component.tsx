@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge"
 import { MapPin, Wind } from "lucide-react"
 import "leaflet/dist/leaflet.css"
 
-const API_BASE_URL = "http://127.0.0.1:8000"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || ""
+const api = (path: string) => (API_BASE_URL ? `${API_BASE_URL}${path}` : path)
 
 function getAQICategory(aqi: number) {
   if (aqi <= 50) return { label: "Good", color: "#16a34a" }
@@ -27,7 +28,7 @@ export default function MapComponent() {
     const fetchCities = async () => {
       try {
         setMapError(null)
-        const res = await fetch(`${API_BASE_URL}/cities/available`)
+        const res = await fetch(api('/cities/available'))
         if (!res.ok) {
           setMapError(`Server returned ${res.status} while fetching cities`)
           return
@@ -63,7 +64,7 @@ export default function MapComponent() {
         const promises = cities.map(async (city: any) => {
           if (!city?.name) return [city?.name, { aqi: null, station: undefined }]
           try {
-            const url = `${API_BASE_URL}/live/aqi/stations?city=${encodeURIComponent(city.name)}`
+            const url = api(`/live/aqi/stations?city=${encodeURIComponent(city.name)}`)
             const res = await fetch(url, { signal: controller.signal })
             if (!res.ok) return [city.name, { aqi: null, station: undefined }]
             const data = await res.json()
@@ -116,7 +117,7 @@ export default function MapComponent() {
               setTimeout(() => {
                 ;(async () => {
                   try {
-                    const res = await fetch(`${API_BASE_URL}/cities/available`)
+                    const res = await fetch(api('/cities/available'))
                     if (!res.ok) { setMapError(`Server returned ${res.status} while fetching cities`); return }
                     const data = await res.json()
                     const normalized = (data.cities || []).map((c: any) => ({ name: c.name, lat: Number(c.lat), lng: Number(c.lng), aqi: Number(c.aqi) }))
