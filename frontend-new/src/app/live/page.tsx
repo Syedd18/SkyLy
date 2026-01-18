@@ -9,7 +9,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { AQIData } from "@/types"
 import { useAuth } from "@/contexts/auth-context"
 
-const API_BASE_URL = "http://127.0.0.1:8000"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || ""
+const api = (path: string) => (API_BASE_URL ? `${API_BASE_URL}${path}` : path)
 
 function getAQICategory(aqi: number) {
   if (aqi <= 50) return { label: "Good", color: "bg-green-500", colorHex: '#22c55e' }
