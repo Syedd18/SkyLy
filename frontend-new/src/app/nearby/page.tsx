@@ -25,7 +25,8 @@ export default function NearbyPage() {
   const [stations, setStations] = useState<any[]>([])
   const [stationsError, setStationsError] = useState<string | null>(null)
   const [radiusKm, setRadiusKm] = useState(15)
-  const API_BASE_URL = "http://127.0.0.1:8000"
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || ""
+  const api = (path: string) => (API_BASE_URL ? `${API_BASE_URL}${path}` : path)
 
   function haversineDistance(lat1:number, lon1:number, lat2:number, lon2:number) {
     const toRad = (x:number) => (x * Math.PI) / 180
