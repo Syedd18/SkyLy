@@ -9,7 +9,8 @@ interface AQITrendChartProps {
   location: string
 }
 
-const API_BASE_URL = "http://127.0.0.1:8000"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || ""
+const api = (path: string) => (API_BASE_URL ? `${API_BASE_URL}${path}` : path)
 
 export function AQITrendChart({ location }: AQITrendChartProps) {
   const [trendData, setTrendData] = useState<TrendData[]>([])
