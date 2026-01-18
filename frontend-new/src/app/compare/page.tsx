@@ -158,7 +158,7 @@ export default function ComparePage() {
         const comp = await fetch(`${API_BASE_URL}/live/aqi?city=${encodeURIComponent(city1)}`)
         if (comp.ok) {
           const cd = await comp.json()
-          setData1(prev => ({ ...(prev || {}), components: cd.components || cd.iaqi || cd }))
+          setData1((prev: any) => ({ ...(prev || {}), components: cd.components || cd.iaqi || cd }))
         }
       } catch (e) { /* non-fatal */ }
 
@@ -190,7 +190,7 @@ export default function ComparePage() {
         const comp2 = await fetch(`${API_BASE_URL}/live/aqi?city=${encodeURIComponent(city2)}`)
         if (comp2.ok) {
           const cd2 = await comp2.json()
-          setData2(prev => ({ ...(prev || {}), components: cd2.components || cd2.iaqi || cd2 }))
+          setData2((prev: any) => ({ ...(prev || {}), components: cd2.components || cd2.iaqi || cd2 }))
         }
       } catch (e) { /* non-fatal */ }
 
