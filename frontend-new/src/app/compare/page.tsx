@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react"
 
-const API_BASE_URL = "http://127.0.0.1:8000"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || ""
+const api = (path: string) => (API_BASE_URL ? `${API_BASE_URL}${path}` : path)
 import { Navigation } from "@/components/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -89,7 +90,7 @@ export default function ComparePage() {
   useEffect(() => {
     const fetchCities = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/cities`)
+        const res = await fetch(api('/cities'))
         if (res.ok) {
           const data = await res.json()
           setCities(data)
@@ -130,7 +131,7 @@ export default function ComparePage() {
     try {
       // city1 stations
       try {
-        const s1 = await fetch(`${API_BASE_URL}/live/aqi/stations?city=${encodeURIComponent(city1)}`)
+        const s1 = await fetch(api(`/live/aqi/stations?city=${encodeURIComponent(city1)}`))
         if (s1.ok) {
           const js = await s1.json()
           const top = js.stations?.[0]
@@ -146,7 +147,7 @@ export default function ComparePage() {
           }
         } else {
           // fallback to city-level live
-          const r = await fetch(`${API_BASE_URL}/live/aqi?city=${encodeURIComponent(city1)}`)
+          const r = await fetch(api(`/live/aqi?city=${encodeURIComponent(city1)}`))
           if (r.ok) setData1(await r.json())
         }
       } catch (e) {
@@ -155,7 +156,7 @@ export default function ComparePage() {
 
       // Also fetch city-level live for components (PM2.5 etc.) if available
       try {
-        const comp = await fetch(`${API_BASE_URL}/live/aqi?city=${encodeURIComponent(city1)}`)
+        const comp = await fetch(api(`/live/aqi?city=${encodeURIComponent(city1)}`))
         if (comp.ok) {
           const cd = await comp.json()
           setData1((prev: any) => ({ ...(prev || {}), components: cd.components || cd.iaqi || cd }))
@@ -164,7 +165,7 @@ export default function ComparePage() {
 
       // city2 stations
       try {
-        const s2 = await fetch(`${API_BASE_URL}/live/aqi/stations?city=${encodeURIComponent(city2)}`)
+        const s2 = await fetch(api(`/live/aqi/stations?city=${encodeURIComponent(city2)}`))
         if (s2.ok) {
           const js2 = await s2.json()
           const top2 = js2.stations?.[0]
@@ -179,7 +180,7 @@ export default function ComparePage() {
             })
           }
         } else {
-          const r2 = await fetch(`${API_BASE_URL}/live/aqi?city=${encodeURIComponent(city2)}`)
+          const r2 = await fetch(api(`/live/aqi?city=${encodeURIComponent(city2)}`))
           if (r2.ok) setData2(await r2.json())
         }
       } catch (e) {
@@ -187,7 +188,7 @@ export default function ComparePage() {
       }
 
       try {
-        const comp2 = await fetch(`${API_BASE_URL}/live/aqi?city=${encodeURIComponent(city2)}`)
+        const comp2 = await fetch(api(`/live/aqi?city=${encodeURIComponent(city2)}`))
         if (comp2.ok) {
           const cd2 = await comp2.json()
           setData2((prev: any) => ({ ...(prev || {}), components: cd2.components || cd2.iaqi || cd2 }))
@@ -196,16 +197,16 @@ export default function ComparePage() {
 
       // Fetch last 1 year CSV-based historical series from backend compare endpoint
       try {
-        const compRes = await fetch(`${API_BASE_URL}/compare?city1=${encodeURIComponent(city1)}&city2=${encodeURIComponent(city2)}`)
+        const compRes = await fetch(api(`/compare?city1=${encodeURIComponent(city1)}&city2=${encodeURIComponent(city2)}`))
         if (compRes.ok) {
           const compJson = await compRes.json()
           setTrend1((compJson.city1?.dates || []).map((dt:string,i:number)=>({date:dt, aqi: compJson.city1.aqi[i]})))
           setTrend2((compJson.city2?.dates || []).map((dt:string,i:number)=>({date:dt, aqi: compJson.city2.aqi[i]})))
         } else {
           // fallback per-city analytics
-          const a1 = await fetch(`${API_BASE_URL}/analytics?city=${encodeURIComponent(city1)}`)
+          const a1 = await fetch(api(`/analytics?city=${encodeURIComponent(city1)}`))
           if (a1.ok) { const d = await a1.json(); setTrend1((d.dates || []).map((dt:string,i:number)=>({date:dt, aqi: d.aqi[i]}))) }
-          const a2 = await fetch(`${API_BASE_URL}/analytics?city=${encodeURIComponent(city2)}`)
+          const a2 = await fetch(api(`/analytics?city=${encodeURIComponent(city2)}`))
           if (a2.ok) { const d2 = await a2.json(); setTrend2((d2.dates || []).map((dt:string,i:number)=>({date:dt, aqi: d2.aqi[i]}))) }
         }
       } catch (e) { console.error('compare fetch failed', e) }
