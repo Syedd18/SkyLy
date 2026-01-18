@@ -4,7 +4,8 @@ import { useState } from "react"
 import { Send, X } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 
-const API_BASE_URL = "http://127.0.0.1:8000"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || ""
+const api = (path: string) => (API_BASE_URL ? `${API_BASE_URL}${path}` : path)
 
 interface ChatbotProps {
   inline?: boolean
