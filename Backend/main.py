@@ -49,7 +49,13 @@ OPEN_METEO_HOURLY_VARS = (
 
 # Path configuration
 BASE_DIR = Path(__file__).parent
+# Primary CSV path inside the Backend package
 CSV_PATH = BASE_DIR / "Dataset" / "aqi_timeseries.csv"
+# Fallback: repo-root `Dataset/aqi_timeseries.csv` (some users keep dataset at project root)
+if not CSV_PATH.exists():
+    alt_path = BASE_DIR.parent / "Dataset" / "aqi_timeseries.csv"
+    if alt_path.exists():
+        CSV_PATH = alt_path
 
 # ---------------- LOAD DATA ----------------
 # Ensure the Dataset folder and csv exist relative to this script
