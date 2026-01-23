@@ -33,13 +33,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Load auth state from localStorage
     const loadAuthState = () => {
+      console.log('loadAuthState called')
       const storedToken = localStorage.getItem('auth_token')
       const storedUser = localStorage.getItem('user_data')
+      console.log('Stored token:', storedToken ? `present (${storedToken.substring(0, 20)}...)` : 'missing')
+      console.log('Stored user:', storedUser ? 'present' : 'missing')
 
       if (storedToken && storedUser) {
         try {
           setToken(storedToken)
           setUser(JSON.parse(storedUser))
+          console.log('Auth state loaded successfully')
         } catch (e) {
           console.error('Failed to parse stored user data:', e)
         }
@@ -52,26 +56,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.addEventListener('storage', loadAuthState)
     
     // Listen for custom auth-updated event (from same tab after OAuth callback)
-    const handleAuthUpdate = () => loadAuthState()
+    const handleAuthUpdate = () => {
+      console.log('auth-updated event received')
+      loadAuthState()
+    }
     window.addEventListener('auth-updated', handleAuthUpdate)
-    
-    // Also poll for changes after navigation (for OAuth callback redirect)
-    const pollInterval = setInterval(() => {
-      const storedToken = localStorage.getItem('auth_token')
-      if (storedToken && !token) {
-        loadAuthState()
-      }
-    }, 500)
-    
-    // Stop polling after 10 seconds
-    setTimeout(() => clearInterval(pollInterval), 10000)
     
     return () => {
       window.removeEventListener('storage', loadAuthState)
       window.removeEventListener('auth-updated', handleAuthUpdate)
-      clearInterval(pollInterval)
     }
-  }, [token])
+  }, [])
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
