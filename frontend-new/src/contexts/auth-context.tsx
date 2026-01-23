@@ -37,17 +37,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const storedUser = localStorage.getItem('user_data')
 
       if (storedToken && storedUser) {
-        setToken(storedToken)
-        setUser(JSON.parse(storedUser))
+        try {
+          setToken(storedToken)
+          setUser(JSON.parse(storedUser))
+        } catch (e) {
+          console.error('Failed to parse stored user data:', e)
+        }
       }
     }
 
     loadAuthState()
 
-    // Listen for storage changes (e.g., from OAuth callback)
+    // Listen for storage changes (from other tabs)
     window.addEventListener('storage', loadAuthState)
-    return () => window.removeEventListener('storage', loadAuthState)
-  }, [])
+    
+    // Listen for custom auth-updated event (from same tab after OAuth callback)
+    const handleAuthUpdate = () => loadAuthState()
+    window.addEventListener('auth-updated', handleAuthUpdate)
+    
+    // Also poll for changes after navigation (for OAuth callback redirect)
+    const pollInterval = setInterval(() => {
+      const storedToken = localStorage.getItem('auth_token')
+      if (storedToken && !token) {
+        loadAuthState()
+      }
+    }, 500)
+    
+    // Stop polling after 10 seconds
+    setTimeout(() => clearInterval(pollInterval), 10000)
+    
+    return () => {
+      window.removeEventListener('storage', loadAuthState)
+      window.removeEventListener('auth-updated', handleAuthUpdate)
+      clearInterval(pollInterval)
+    }
+  }, [token])
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
