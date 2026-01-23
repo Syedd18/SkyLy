@@ -43,5 +43,4 @@ next-env.d.ts
 # local cache and large artifacts
 .turbo/
 node_modules/
-package-lock.json
 .idea/
