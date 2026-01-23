@@ -111,7 +111,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       alert('Supabase client not configured')
       return
     }
-    const { error } = await supabase().auth.signInWithOAuth({
+    const client = supabase()
+    if (!client) {
+      alert('Supabase client not configured')
+      return
+    }
+    const { error } = await client.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`
@@ -129,7 +134,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       alert('Supabase client not configured')
       return { needsOtp: false }
     }
-    const { error } = await supabase().auth.signInWithOtp({ phone })
+    const client = supabase()
+    if (!client) {
+      alert('Supabase client not configured')
+      return { needsOtp: false }
+    }
+    const { error } = await client.auth.signInWithOtp({ phone })
     if (error) {
       console.error('Phone login error:', error)
       alert(`Phone login failed: ${error.message}`)
@@ -144,7 +154,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       alert('Supabase client not configured')
       return false
     }
-    const { data, error } = await supabase().auth.verifyOtp({ phone, token: otp, type: 'sms' })
+    const client = supabase()
+    if (!client) {
+      alert('Supabase client not configured')
+      return false
+    }
+    const { data, error } = await client.auth.verifyOtp({ phone, token: otp, type: 'sms' })
     if (error) {
       console.error('OTP verification error:', error)
       alert(`OTP verification failed: ${error.message}`)
