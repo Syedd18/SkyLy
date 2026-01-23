@@ -95,7 +95,17 @@ export function StationsList({ city }: { city: string }) {
             </div>
 
             <div className="mt-4">
-              <button className="w-full px-3 py-2 rounded-md bg-primary text-white flex items-center justify-center">
+              <button 
+                className="w-full px-3 py-2 rounded-md bg-primary text-white flex items-center justify-center hover:bg-primary/90 transition-colors"
+                onClick={() => {
+                  if (s.coordinates?.lat && s.coordinates?.lng) {
+                    window.open(`https://www.google.com/maps/search/?api=1&query=${s.coordinates.lat},${s.coordinates.lng}`, '_blank')
+                  } else {
+                    // Fallback to searching by station name
+                    window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.station_name + ' ' + city)}`, '_blank')
+                  }
+                }}
+              >
                 <MapPin className="h-4 w-4 mr-2" /> View on Map
               </button>
             </div>
