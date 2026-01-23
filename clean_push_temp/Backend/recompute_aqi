@@ -1,9 +1,0 @@
-import pandas as pd
-from utils.aqi_calculation import calculate_aqi
-
-df = pd.read_csv("Dataset/city_day.csv")
-df_corrected = calculate_aqi(df)
-
-df_corrected.to_csv("Dataset/city_day_corrected.csv", index=False)
-
-print("✔ AQI recalculated and saved as city_day_corrected.csv")
