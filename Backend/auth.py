@@ -332,7 +332,8 @@ def ensure_local_user_from_supabase(email: str, name: Optional[str] = None) -> i
         return existing["id"] if isinstance(existing, dict) and "id" in existing else existing[0]
 
     # Insert a placeholder password hash (random) so DB constraints are satisfied
-    random_pw = os.urandom(16).hex()
+    # Keep password under 72 bytes for bcrypt
+    random_pw = os.urandom(16).hex()[:72]
     pw_hash = get_password_hash(random_pw)
     with get_conn() as (conn, is_pg):
         cur = conn.cursor()
