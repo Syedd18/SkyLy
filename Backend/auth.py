@@ -1,41 +1,22 @@
 """
 User Authentication Module
-Handles user registration, login, JWT token generation, and password hashing
-This module prefers a managed Postgres database via `DATABASE_URL` and falls
-back to a local SQLite file when `DATABASE_URL` is not provided.
-"""
-
-from datetime import datetime, timedelta
-from typing import Optional
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from passlib.context import CryptContext
-from jose import JWTError, jwt
-from pydantic import BaseModel, EmailStr
-import sqlite3
-from pathlib import Path
-import os
-from contextlib import contextmanager
-"""
-User Authentication Module
 Handles user registration, login, JWT token generation, and password hashing.
 Supports Postgres via `DATABASE_URL` (psycopg) and falls back to SQLite using `USERS_DB_PATH`.
 """
 import os
+import json
 from datetime import datetime, timedelta
 from typing import Optional
+from contextlib import contextmanager
+from pathlib import Path
+from pathlib import Path as _Path
+import sqlite3
+import requests
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from pydantic import BaseModel, EmailStr
-import sqlite3
-from pathlib import Path
-from contextlib import contextmanager
-import requests
-import json
-import os
-from pathlib import Path as _Path
 
 # Try to auto-load a .env file from the repository root if python-dotenv is present.
 try:
