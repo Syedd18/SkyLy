@@ -1,5 +1,7 @@
 from fastapi import FastAPI, HTTPException, Body, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from starlette.requests import Request
 import requests
 import pandas as pd
 from pathlib import Path
@@ -13,14 +15,18 @@ from datetime import datetime, timedelta
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
+import google.generativeai as genai
 
 # Import authentication module
 from Backend.auth import (
     UserRegister, UserLogin, Token, UserProfile,
     create_access_token, get_current_user, get_current_user_optional,
     verify_password, get_user_by_email, create_user,
+    supabase_admin_create_user, supabase_sign_in, ensure_local_user_from_supabase,
     get_user_favorites, add_favorite_city, remove_favorite_city
 )
+from Backend.auth import SUPABASE_AVAILABLE, SUPABASE_SERVICE_AVAILABLE, SUPABASE_URL
+import traceback
 
 # ---------------- APP CONFIGURATION ----------------
 app = FastAPI(title="Air Quality Intelligence API")
@@ -33,6 +39,28 @@ app.add_middleware(
     allow_methods=["*"],          # Allows all methods
     allow_headers=["*"],          # Allows all headers
 )
+
+
+# Global exception handlers to ensure CORS headers are present on error responses
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    # Mirror CORS origin header if present to satisfy browsers when credentials used
+    origin = request.headers.get("origin") or "*"
+    headers = {"Access-Control-Allow-Origin": origin}
+    if app.user_middleware:
+        # keep credentials flag if configured
+        headers["Access-Control-Allow-Credentials"] = "true"
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail}, headers=headers)
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    import traceback as _tb
+    tb = _tb.format_exc()
+    print("Unhandled exception:\n", tb)
+    origin = request.headers.get("origin") or "*"
+    headers = {"Access-Control-Allow-Origin": origin, "Access-Control-Allow-Credentials": "true"}
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"}, headers=headers)
 
 # ---------------- CONSTANTS ----------------
 # Note: In production, use environment variables for tokens
@@ -970,54 +998,124 @@ def share_report(req: ShareRequest = Body(...)):
 # ==================== USER AUTHENTICATION ENDPOINTS ====================
 @app.post("/api/auth/register", response_model=Token)
 async def register(user_data: UserRegister):
-    """Register a new user"""
-    # Check if user already exists
-    existing_user = get_user_by_email(user_data.email)
-    if existing_user:
-        raise HTTPException(
-            status_code=400,
-            detail="Email already registered"
-        )
-    
-    # Create user
-    user_id = create_user(user_data.email, user_data.name, user_data.password)
-    
-    # Create access token
-    access_token = create_access_token(data={"sub": user_data.email})
-    
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "user": {
-            "id": user_id,
-            "email": user_data.email,
-            "name": user_data.name
+    """Register a new user via Supabase Auth (server-side)."""
+    try:
+        # create in Supabase (admin or signup depending on config)
+        result = supabase_admin_create_user(user_data.email, user_data.password, user_data.name)
+
+        # Ensure local profile exists
+        try:
+            local_id = ensure_local_user_from_supabase(user_data.email, user_data.name)
+        except Exception:
+            local_id = None
+
+        # Attempt to sign in to obtain an access token to return to client
+        token_resp = supabase_sign_in(user_data.email, user_data.password)
+
+        return {
+            "access_token": token_resp.get("access_token"),
+            "token_type": token_resp.get("token_type", "bearer"),
+            "user": {
+                "id": local_id,
+                "email": user_data.email,
+                "name": user_data.name,
+            }
         }
+    except HTTPException as e:
+        # propagate expected HTTPExceptions
+        raise e
+    except Exception as e:
+        tb = traceback.format_exc()
+        print("ERROR in /api/auth/register:\n", tb)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/debug/env")
+def debug_env():
+    """Return whether the server process sees Supabase keys (booleans only). Does NOT expose secrets."""
+    return {
+        "supabase_available": bool(SUPABASE_AVAILABLE),
+        "supabase_service_available": bool(SUPABASE_SERVICE_AVAILABLE),
+        "supabase_url_set": bool(SUPABASE_URL),
     }
 
 
 @app.post("/api/auth/login", response_model=Token)
 async def login(credentials: UserLogin):
-    """Login user and return JWT token"""
-    user = get_user_by_email(credentials.email)
-    
-    if not user or not verify_password(credentials.password, user["password_hash"]):
-        raise HTTPException(
-            status_code=401,
-            detail="Incorrect email or password"
-        )
-    
-    access_token = create_access_token(data={"sub": user["email"]})
-    
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "user": {
-            "id": user["id"],
-            "email": user["email"],
-            "name": user["name"]
+    """Login via Supabase Auth and return the Supabase access token."""
+    try:
+        token_resp = supabase_sign_in(credentials.email, credentials.password)
+
+        # Ensure local profile exists (create if missing)
+        try:
+            local_id = ensure_local_user_from_supabase(credentials.email, None)
+        except Exception:
+            local_id = None
+
+        return {
+            "access_token": token_resp.get("access_token"),
+            "token_type": token_resp.get("token_type", "bearer"),
+            "user": {
+                "id": local_id,
+                "email": credentials.email,
+                "name": None
+            }
         }
-    }
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        tb = traceback.format_exc()
+        print("ERROR in /api/auth/login:\n", tb)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class SupabaseCallbackData(BaseModel):
+    access_token: str
+    refresh_token: Optional[str] = None
+
+
+@app.post("/api/auth/supabase-callback")
+async def supabase_callback(data: SupabaseCallbackData):
+    """
+    Handle OAuth callback from Supabase.
+    Validates the Supabase access token and creates/updates local user.
+    Returns backend JWT token for API access.
+    """
+    try:
+        # Validate the Supabase token by fetching user info
+        from Backend.auth import supabase_get_user_from_token
+        
+        user_info = supabase_get_user_from_token(data.access_token)
+        if not user_info:
+            raise HTTPException(status_code=401, detail="Invalid Supabase token")
+        
+        email = user_info.get("email")
+        user_id = user_info.get("id")
+        
+        if not email:
+            raise HTTPException(status_code=400, detail="No email in Supabase user")
+        
+        # Ensure local user exists
+        local_id = ensure_local_user_from_supabase(email, user_id)
+        
+        # Create backend JWT token
+        backend_token = create_access_token(data={"sub": email})
+        
+        return {
+            "access_token": backend_token,
+            "token_type": "bearer",
+            "user": {
+                "id": local_id,
+                "email": email,
+                "name": user_info.get("user_metadata", {}).get("name"),
+            }
+        }
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        tb = traceback.format_exc()
+        print("ERROR in /api/auth/supabase-callback:\n", tb)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/api/auth/me", response_model=UserProfile)
@@ -1314,103 +1412,225 @@ async def migration_advisor(current_city: str, max_results: int = 10):
 
 
 # ==================== CHATBOT ASSISTANT ====================
+# Initialize Gemini AI
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
+    # Use the latest Gemini 2.5 Flash model
+    gemini_model = genai.GenerativeModel('gemini-2.5-flash')
+else:
+    gemini_model = None
+
+def get_detailed_aqi_info(city: str) -> dict:
+    """Fetch comprehensive AQI data - uses same method as /live/aqi endpoint"""
+    try:
+        # First get city feed
+        url = f"https://api.waqi.info/feed/{city}/"
+        res = requests.get(url, params={"token": WAQI_TOKEN}, timeout=10)
+        data = res.json()
+        
+        if data.get("status") != "ok":
+            return None
+        
+        d = data["data"]
+        result = {
+            "city": d.get("city", {}).get("name", city),
+            "aqi": d.get("aqi", "-"),
+            "dominant_pollutant": d.get("dominentpol", "N/A"),
+            "components": d.get("iaqi", {}),
+            "time": d.get("time", {}).get("s", "N/A")
+        }
+        
+        # Try to get highest AQI station (same as live page logic)
+        try:
+            search_url = "https://api.waqi.info/search/"
+            search_res = requests.get(search_url, params={"token": WAQI_TOKEN, "keyword": city}, timeout=8)
+            search_data = search_res.json()
+            stations = search_data.get("data", []) if isinstance(search_data, dict) else []
+            
+            max_station = None
+            for s in stations:
+                aqi_raw = s.get("aqi", "-")
+                try:
+                    aqi_val = float(aqi_raw) if aqi_raw != "-" else -1
+                except (ValueError, TypeError):
+                    continue
+                if aqi_val < 0:
+                    continue
+                if not max_station or aqi_val > max_station.get("_aqi_val", -1):
+                    s["_aqi_val"] = aqi_val
+                    max_station = s
+            
+            if max_station and max_station.get("uid"):
+                uid = max_station.get("uid")
+                feed_url = f"https://api.waqi.info/feed/@{uid}/"
+                feed_res = requests.get(feed_url, params={"token": WAQI_TOKEN}, timeout=3)
+                feed_data = feed_res.json()
+                if feed_data.get("status") == "ok" and feed_data.get("data"):
+                    fd = feed_data.get("data")
+                    result["aqi"] = fd.get("aqi", result["aqi"])
+                    result["components"] = fd.get("iaqi", result["components"])
+                    result["time"] = fd.get("time", {}).get("s") or fd.get("time", {}).get("stime") or result["time"]
+                    result["city"] = fd.get("city", {}).get("name", result["city"])
+        except:
+            pass  # Use city feed if station search fails
+        
+        # Get category
+        aqi_value = result["aqi"]
+        try:
+            aqi_num = float(aqi_value)
+            if aqi_num <= 50:
+                category = "Good"
+            elif aqi_num <= 100:
+                category = "Moderate"
+            elif aqi_num <= 150:
+                category = "Unhealthy for Sensitive Groups"
+            elif aqi_num <= 200:
+                category = "Unhealthy"
+            elif aqi_num <= 300:
+                category = "Very Unhealthy"
+            else:
+                category = "Hazardous"
+        except (ValueError, TypeError):
+            category = "Unknown"
+        
+        # Extract pollutant data
+        components = result["components"]
+        pollutants = {}
+        for key in ["pm25", "pm10", "o3", "no2", "so2", "co"]:
+            if key in components:
+                pollutants[key.upper()] = components[key].get("v", "-")
+        
+        return {
+            "city": result["city"],
+            "aqi": aqi_value,
+            "category": category,
+            "dominant_pollutant": result["dominant_pollutant"],
+            "pollutants": pollutants,
+            "time": result["time"],
+            "humidity": components.get("h", {}).get("v", "N/A"),
+            "temperature": components.get("t", {}).get("v", "N/A"),
+            "pressure": components.get("p", {}).get("v", "N/A")
+        }
+    except Exception as e:
+        print(f"Error fetching AQI for {city}: {e}")
+        return None
+
 @app.post("/api/chatbot/query")
 async def chatbot_query(query: str = Body(..., embed=True), user: dict = Depends(get_current_user_optional)):
-    """Process natural language queries about air quality"""
-    query_lower = query.lower()
+    """AI-powered air quality assistant using Google Gemini"""
     
-    # Safety check
-    if "safe" in query_lower or "jog" in query_lower or "exercise" in query_lower:
-        # Extract city if mentioned
-        city = None
-        for c in INDIAN_CITIES:
-            if c['name'].lower() in query_lower:
-                city = c['name']
-                break
-        
-        if not city and user:
-            # Use user's first favorite city if available
-            favorites = get_user_favorites(user["id"])
-            if favorites:
-                city = favorites[0]["city"]
-        
-        if city:
-            try:
-                aqi_data = fetch_aqi_waqi(city)
-                aqi_value = aqi_data.get('aqi')
-                
-                if aqi_value <= 50:
-                    response = f"✅ Yes! The air quality in {city} is GOOD (AQI: {aqi_value}). Perfect for outdoor activities like jogging and exercise!"
-                elif aqi_value <= 100:
-                    response = f"⚠️ The air quality in {city} is MODERATE (AQI: {aqi_value}). Light outdoor activities are okay, but sensitive individuals should limit prolonged exertion."
-                elif aqi_value <= 150:
-                    response = f"⚠️ Not recommended. {city} has UNHEALTHY air for sensitive groups (AQI: {aqi_value}). Consider indoor exercise instead."
-                else:
-                    response = f"❌ NO! {city} has UNHEALTHY air (AQI: {aqi_value}). Avoid outdoor exercise. Stay indoors and use air purifiers if possible."
-                
-                return {"response": response, "city": city, "aqi": aqi_value}
-            except:
-                pass
+    # Extract cities mentioned in the query
+    mentioned_cities = [c['name'] for c in INDIAN_CITIES if c['name'].lower() in query.lower()]
     
-    # AQI level query
-    if "aqi" in query_lower or "air quality" in query_lower:
-        city = None
-        for c in INDIAN_CITIES:
-            if c['name'].lower() in query_lower:
-                city = c['name']
-                break
-        
-        if city:
-            try:
-                aqi_data = fetch_aqi_waqi(city)
-                aqi_value = aqi_data.get('aqi')
-                category = aqi_data.get('category')
-                
-                response = f"The current AQI in {city} is {aqi_value} ({category}). "
-                
-                if aqi_value <= 50:
-                    response += "Air quality is excellent! Great time to be outdoors."
-                elif aqi_value <= 100:
-                    response += "Air quality is acceptable for most people."
-                elif aqi_value <= 150:
-                    response += "Sensitive groups should limit outdoor exposure."
-                else:
-                    response += "Everyone should avoid prolonged outdoor exposure."
-                
-                return {"response": response, "city": city, "aqi": aqi_value}
-            except:
-                pass
+    # Gather detailed AQI data for mentioned cities
+    aqi_context = ""
+    aqi_data_dict = {}
     
-    # Comparison query
-    if "better" in query_lower or "worse" in query_lower or "compare" in query_lower:
-        cities_found = [c['name'] for c in INDIAN_CITIES if c['name'].lower() in query_lower]
-        
-        if len(cities_found) >= 2:
-            try:
-                city1_data = fetch_aqi_waqi(cities_found[0])
-                city2_data = fetch_aqi_waqi(cities_found[1])
-                
-                aqi1 = city1_data.get('aqi')
-                aqi2 = city2_data.get('aqi')
-                
-                if aqi1 < aqi2:
-                    response = f"{cities_found[0]} has better air quality (AQI: {aqi1}) compared to {cities_found[1]} (AQI: {aqi2}). Difference: {aqi2 - aqi1} points."
-                else:
-                    response = f"{cities_found[1]} has better air quality (AQI: {aqi2}) compared to {cities_found[0]} (AQI: {aqi1}). Difference: {aqi1 - aqi2} points."
-                
-                return {"response": response, "cities": cities_found, "aqi_values": [aqi1, aqi2]}
-            except:
-                pass
+    for city in mentioned_cities[:3]:  # Limit to 3 cities
+        info = get_detailed_aqi_info(city)
+        if info:
+            aqi_context += f"""
+- {info['city']}: 
+  * AQI: {info['aqi']} ({info['category']})
+  * Dominant Pollutant: {info['dominant_pollutant']}
+  * PM2.5: {info['pollutants'].get('PM25', 'N/A')} | PM10: {info['pollutants'].get('PM10', 'N/A')}
+  * Temperature: {info['temperature']}°C | Humidity: {info['humidity']}%
+  * Last Updated: {info['time']}"""
+            aqi_data_dict[city] = info
     
-    # Default response
-    return {
-        "response": "I can help you with:\n• Current AQI levels (e.g., 'What's the AQI in Delhi?')\n• Safety advice (e.g., 'Is it safe to jog in Mumbai?')\n• City comparisons (e.g., 'Which is better, Delhi or Bangalore?')\n\nWhat would you like to know?",
-        "suggestions": [
-            "What's the air quality in Delhi?",
-            "Is it safe to exercise in Mumbai?",
-            "Compare Delhi and Bangalore air quality"
-        ]
-    }
+    # If no cities mentioned and user is logged in, try their favorite cities
+    if not mentioned_cities and user:
+        favorites = get_user_favorites(user["id"])
+        if favorites:
+            for fav in favorites[:2]:
+                city = fav["city"]
+                info = get_detailed_aqi_info(city)
+                if info:
+                    aqi_context += f"""
+- {info['city']} (your favorite): 
+  * AQI: {info['aqi']} ({info['category']})
+  * Dominant Pollutant: {info['dominant_pollutant']}
+  * Last Updated: {info['time']}"""
+                    aqi_data_dict[city] = info
+    
+    # Use Gemini AI for ALL queries
+    if not gemini_model:
+        return {
+            "response": "⚠️ AI assistant is currently unavailable. Please add GEMINI_API_KEY to your .env file.",
+            "error": "Gemini API not configured",
+            "timestamp": datetime.now().isoformat()
+        }
+    
+    try:
+        # Build comprehensive context for Gemini
+        context_note = ""
+        if not aqi_context:
+            context_note = "\nNote: No specific cities were mentioned, so provide general information or ask the user to specify a city."
+        
+        system_prompt = f"""You are an expert air quality assistant. Answer questions about air pollution, AQI (Air Quality Index), health recommendations, and environmental data.
+
+AQI Categories & Health Implications:
+- 0-50 (Good, 🟢 Green): Air quality is satisfactory. Safe for all outdoor activities.
+- 51-100 (Moderate, 🟡 Yellow): Acceptable. Unusually sensitive people should consider limiting prolonged outdoor exertion.
+- 101-150 (Unhealthy for Sensitive Groups, 🟠 Orange): Sensitive groups (children, elderly, people with respiratory conditions) should limit prolonged outdoor exposure.
+- 151-200 (Unhealthy, 🔴 Red): Everyone may experience health effects. Sensitive groups should avoid outdoor activities.
+- 201-300 (Very Unhealthy, 🟣 Purple): Health alert. Everyone should avoid prolonged or heavy outdoor exertion.
+- 301+ (Hazardous, 🔴⚫ Maroon): Emergency conditions. Everyone should stay indoors with air purifiers.
+
+Pollutant Information:
+- PM2.5: Fine particles (≤2.5μm) - most dangerous, penetrates deep into lungs and bloodstream
+- PM10: Coarse particles (≤10μm) - causes respiratory irritation
+- O3 (Ozone): Causes breathing problems, especially during hot weather
+- NO2: From vehicle emissions, irritates airways
+- SO2: From industrial emissions, affects breathing
+- CO: Carbon monoxide from combustion, prevents oxygen absorption
+
+Health Recommendations by AQI:
+- Good (0-50): Enjoy outdoor activities
+- Moderate (51-100): Sensitive individuals should watch for symptoms
+- USG (101-150): Sensitive groups: reduce prolonged outdoor exertion
+- Unhealthy (151-200): Everyone: reduce outdoor exertion, especially children and elderly
+- Very Unhealthy (201-300): Everyone: avoid outdoor activities, keep windows closed
+- Hazardous (301+): Stay indoors, use air purifiers, wear N95 masks if must go out
+
+Current Real-Time AQI Data (fetched from live monitoring stations):{aqi_context}{context_note}
+
+User Question: {query}
+
+Instructions:
+1. ALWAYS mention the exact AQI value and category from the real-time data when discussing specific cities
+2. Provide direct, accurate answers based on the current data
+3. Give specific health recommendations based on actual AQI levels
+4. If asked about general AQI concepts, provide educational information
+5. Use appropriate emojis for categories
+6. Keep responses concise (2-4 sentences for simple queries, more detail for complex questions)
+7. If no city data is available, ask the user to specify a city or provide general AQI information
+
+Respond naturally and conversationally."""
+        
+        response = gemini_model.generate_content(system_prompt)
+        ai_response = response.text
+        
+        return {
+            "response": ai_response,
+            "cities": mentioned_cities or list(aqi_data_dict.keys()),
+            "aqi_data": aqi_data_dict,
+            "timestamp": datetime.now().isoformat(),
+            "powered_by": "Google Gemini AI"
+        }
+    except Exception as e:
+        error_msg = str(e)
+        print(f"Gemini AI error: {error_msg}")
+        
+        # Provide helpful error message
+        return {
+            "response": f"⚠️ I encountered an error processing your question. Please try rephrasing or ask about a specific city's air quality.\n\nError details: {error_msg}",
+            "error": error_msg,
+            "cities": mentioned_cities,
+            "aqi_data": aqi_data_dict,
+            "timestamp": datetime.now().isoformat()
+        }
 
 
 # ---------------- RUN (DEV ONLY) ----------------
