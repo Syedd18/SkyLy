@@ -194,7 +194,11 @@ export default function LiveAQIPage() {
   }, [isAuthenticated, token, aqiData])
 
   const toggleFavorite = async () => {
-    if (!isAuthenticated || !token || !aqiData) return
+    console.log('toggleFavorite called:', { isAuthenticated, hasToken: !!token, location })
+    if (!isAuthenticated || !token || !aqiData) {
+      console.error('Cannot toggle favorite - not authenticated or missing data:', { isAuthenticated, hasToken: !!token, hasAqiData: !!aqiData })
+      return
+    }
     setFavoritesLoading(true)
     try {
       // Optimistic UI: toggle local state immediately for snappy response
@@ -202,11 +206,31 @@ export default function LiveAQIPage() {
       setIsFavorite(!prev)
       const method = prev ? 'DELETE' : 'POST'
       // Use the normalized `location` (user-visible city) when calling the API
-      const res = await fetch(`${API_BASE_URL}/api/favorites/${encodeURIComponent(location)}`, { method, headers: { Authorization: `Bearer ${token}` } })
+      console.log('Calling favorites API:', { method, location, tokenLength: token.length })
+      const res = await fetch(`${API_BASE_URL}/api/favorites/${encodeURIComponent(location)}`, { 
+        method, 
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        } 
+      })
+      console.log('Favorites API response:', res.status, res.ok)
       if (!res.ok) {
-        // revert on failure
+        // Check if it's a "already exists" or "not found" error which is actually okay
+        const errorData = await res.json().catch(() => ({}))
+        const detail = errorData.detail || ''
+        console.log('Favorites API error detail:', detail)
+        
+        // If trying to add but already exists, or trying to remove but not found, treat as success
+        if ((method === 'POST' && detail.includes('already')) || 
+            (method === 'DELETE' && detail.includes('not found'))) {
+          console.log('Favorite state already correct:', detail)
+          return // Keep the optimistic state
+        }
+        
+        // revert on actual failure
         setIsFavorite(prev)
-        console.error('Failed to toggle favorite, server responded with', res.status)
+        console.error('Failed to toggle favorite, server responded with', res.status, errorData)
       }
     } catch (err) {
       console.error('Failed to toggle favorite', err)
