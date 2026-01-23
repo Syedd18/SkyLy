@@ -74,23 +74,28 @@ function AuthCallbackContent() {
 
         // Store backend JWT and user data with same keys as AuthContext
         if (data.access_token) {
+          console.log("Storing auth_token to localStorage")
           localStorage.setItem("auth_token", data.access_token)
         }
         if (data.user) {
+          console.log("Storing user_data to localStorage:", data.user)
           localStorage.setItem("user_data", JSON.stringify(data.user))
         }
 
         setStatus("success")
         setMessage("Authentication successful! Redirecting...")
 
-        // Trigger a storage event to notify AuthContext
-        window.dispatchEvent(new Event('storage'))
+        // Dispatch custom event for same-tab auth updates
+        console.log("Dispatching auth-updated event")
+        window.dispatchEvent(new Event('auth-updated'))
 
-        // Redirect to home page after 1 second
-        setTimeout(() => {
-          router.push("/")
-          router.refresh() // Force page refresh to update auth state
-        }, 1000)
+        // Small delay to ensure the event is processed
+        await new Promise(resolve => setTimeout(resolve, 100))
+        
+        // Redirect to home page
+        console.log("Redirecting to home page")
+        router.push("/")
+        router.refresh() // Force page refresh to update auth state
       } catch (error: any) {
         console.error("Auth callback error:", error)
         setStatus("error")
