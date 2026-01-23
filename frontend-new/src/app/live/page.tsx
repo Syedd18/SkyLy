@@ -31,14 +31,82 @@ export default function LiveAQIPage() {
   const [isFavorite, setIsFavorite] = useState(false)
   const [favoritesLoading, setFavoritesLoading] = useState(false)
 
+  // Debug: Log auth state
+  useEffect(() => {
+    console.log("Auth state:", { isAuthenticated, hasToken: !!token, tokenLength: token?.length })
+  }, [isAuthenticated, token])
+
+  // Calculate distance between two coordinates using Haversine formula
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371 // Radius of Earth in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180
+    const dLon = (lon2 - lon1) * Math.PI / 180
+    const a = 
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2)
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+    return R * c
+  }
+
+  // Find nearest city from available cities
+  const findNearestCity = async (userLat: number, userLon: number): Promise<string> => {
+    try {
+      // Fetch list of available cities with coordinates
+      const citiesRes = await fetch(`${API_BASE_URL}/cities/all`)
+      if (!citiesRes.ok) {
+        return "Delhi" // Default fallback
+      }
+      
+      const citiesData = await citiesRes.json()
+      const cities = citiesData.cities || citiesData
+      
+      if (!Array.isArray(cities) || cities.length === 0) {
+        return "Delhi"
+      }
+
+      // Calculate distances and find nearest city
+      let nearestCity = "Delhi"
+      let minDistance = Infinity
+
+      cities.forEach((city: any) => {
+        if (city.lat && city.lng) {
+          const distance = calculateDistance(userLat, userLon, city.lat, city.lng)
+          if (distance < minDistance) {
+            minDistance = distance
+            nearestCity = city.name
+          }
+        }
+      })
+
+      console.log(`Nearest city: ${nearestCity} (${minDistance.toFixed(2)} km away)`)
+      return nearestCity
+    } catch (error) {
+      console.error("Error finding nearest city:", error)
+      return "Delhi"
+    }
+  }
+
   useEffect(() => {
     if (autoDetect) {
+      setLoading(true)
       navigator.geolocation.getCurrentPosition(
         async (position) => {
-          // In a real app, you'd reverse geocode to get city name
+          const { latitude, longitude } = position.coords
+          console.log("User location:", latitude, longitude)
+          
+          // Find the nearest city with AQI data
+          const nearestCity = await findNearestCity(latitude, longitude)
+          setLocation(nearestCity)
+          setAutoDetect(false) // Reset auto-detect after locating
+          setLoading(false)
         },
-        () => {
+        (error) => {
+          console.error("Geolocation error:", error)
           // Fallback to default location
+          setLocation("Delhi")
+          setAutoDetect(false)
+          setLoading(false)
         }
       )
     }
@@ -95,37 +163,8 @@ export default function LiveAQIPage() {
   const handleToggleStations = () => setShowStations(s => !s)
 
   const handleLocateMe = () => {
-    // enable auto-detect flow and attempt to get position
+    // Enable auto-detect flow
     setAutoDetect(true)
-    if (navigator.geolocation) {
-      setLoading(true)
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          try {
-            // Reverse geocode using Nominatim (OpenStreetMap)
-            const { latitude, longitude } = pos.coords
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`)
-            if (res.ok) {
-              const data = await res.json()
-              // Extract city from address
-              const city = data.address?.city || data.address?.town || data.address?.village || data.address?.state || 'Delhi'
-              console.log('Detected location:', city)
-              setLocation(city)
-            } else {
-              console.warn('Reverse geocode failed')
-              setLoading(false)
-            }
-          } catch (err) {
-            console.error('Geocoding error:', err)
-            setLoading(false)
-          }
-        },
-        (err) => {
-          console.warn('Locate failed', err)
-          setLoading(false)
-        }
-      )
-    }
   }
 
   useEffect(() => {
