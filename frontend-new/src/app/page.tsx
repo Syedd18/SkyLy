@@ -1,14 +1,15 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Navigation } from "@/components/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/contexts/auth-context"
-import { Heart, MapPin, TrendingUp, TrendingDown, Activity, Users, Star, Trash2 } from "lucide-react"
+import { Heart, MapPin, TrendingUp, TrendingDown, Activity, Users, Star, Trash2, RefreshCw } from "lucide-react"
 
-const API_BASE_URL = "http://127.0.0.1:8000"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || ""
+const api = (path: string) => (API_BASE_URL ? `${API_BASE_URL}${path}` : path)
 
 interface Favorite {
   city: string
@@ -36,27 +37,31 @@ export default function Dashboard() {
     badCities: 0
   })
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
 
-  useEffect(() => {
-    if (isAuthenticated && token) {
-      loadDashboard()
-    } else {
+  const loadDashboard = useCallback(async (showRefreshing = false) => {
+    if (!token) {
       setLoading(false)
+      return
     }
-  }, [isAuthenticated, token])
 
-  const loadDashboard = async () => {
-    if (!token) return
+    if (showRefreshing) {
+      setRefreshing(true)
+    }
 
     try {
+      console.log('Dashboard: Loading favorites...')
       const response = await fetch(`${API_BASE_URL}/api/favorites`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
 
+      console.log('Dashboard: Favorites response status:', response.status)
+
       if (response.ok) {
         const data = await response.json()
+        console.log('Dashboard: Favorites data:', data)
 
         // Enrich favorites with per-city highest-station AQI where available
         const promises = (data.favorites || []).map(async (fav: Favorite) => {
@@ -130,7 +135,46 @@ export default function Dashboard() {
       console.error("Failed to load dashboard:", error)
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
+  }, [token])
+
+  useEffect(() => {
+    if (isAuthenticated && token) {
+      loadDashboard()
+    } else {
+      setLoading(false)
+    }
+  }, [isAuthenticated, token, loadDashboard])
+
+  // Reload when page becomes visible again (user switches tabs back)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isAuthenticated && token) {
+        console.log('Dashboard: Page became visible, reloading...')
+        loadDashboard(true)
+      }
+    }
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [isAuthenticated, token, loadDashboard])
+
+  // Also reload when window gains focus
+  useEffect(() => {
+    const handleFocus = () => {
+      if (isAuthenticated && token) {
+        console.log('Dashboard: Window focused, reloading...')
+        loadDashboard(true)
+      }
+    }
+    
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
+  }, [isAuthenticated, token, loadDashboard])
+
+  const handleRefresh = () => {
+    loadDashboard(true)
   }
 
   const removeFavorite = async (cityName: string) => {
