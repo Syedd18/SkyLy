@@ -14,7 +14,7 @@ import sqlite3
 import requests
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from passlib.context import CryptContext
+import bcrypt
 from jose import JWTError, jwt
 from pydantic import BaseModel, EmailStr
 
@@ -40,7 +40,6 @@ SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-in-production-2026"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
 
 # ---------------- Supabase config (optional) ----------------
@@ -191,11 +190,21 @@ except Exception as e:
 
 # ---------------- Password & JWT helpers ----------------
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    """Verify a password against a hash using bcrypt directly."""
+    try:
+        return bcrypt.checkpw(
+            plain_password.encode('utf-8'),
+            hashed_password.encode('utf-8') if isinstance(hashed_password, str) else hashed_password
+        )
+    except Exception:
+        return False
 
 def get_password_hash(password: str) -> str:
+    """Hash a password using bcrypt directly. Truncates to 72 bytes."""
     # Bcrypt has a 72 byte maximum password length
-    return pwd_context.hash(password[:72])
+    pw_bytes = password[:72].encode('utf-8')
+    salt = bcrypt.gensalt(rounds=12)
+    return bcrypt.hashpw(pw_bytes, salt).decode('utf-8')
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
@@ -225,7 +234,7 @@ def supabase_admin_create_user(email: str, password: str, name: Optional[str] = 
     # If service role key is available, use admin endpoint (recommended for server-side creation)
     if SUPABASE_SERVICE_AVAILABLE:
         url = f"{SUPABASE_URL.rstrip('/')}/auth/v1/admin/users"
-        payload = {"email": email, "password": password}
+        payload = {"email": email, "password": password, "email_confirm": True}
         if name:
             payload["user_metadata"] = {"name": name}
         headers = {
