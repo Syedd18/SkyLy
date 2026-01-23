@@ -182,11 +182,23 @@ export default function NearbyPage() {
             const geoData = await geoRes.json()
             console.log('📍 Reverse geocoding response:', geoData)
             const addr = geoData.address || {}
-            const locality = addr.village || addr.town || addr.city || addr.suburb || addr.county
+            
+            // Prioritize smaller localities: village > town > suburb > municipality > city_district > city
+            // This ensures Potheri/Guduvancheri is shown instead of Chennai
+            const locality = addr.village || addr.hamlet || addr.town || addr.suburb || 
+                           addr.municipality || addr.city_district || addr.neighbourhood || 
+                           addr.city || addr.county
             const state = addr.state
+            
             if (locality) {
               locationName = state ? `${locality}, ${state}` : locality
-              console.log('✅ Location name resolved:', locationName)
+              console.log('✅ Location name resolved:', locationName, 'from', {
+                village: addr.village,
+                town: addr.town,
+                suburb: addr.suburb,
+                municipality: addr.municipality,
+                city: addr.city
+              })
             }
           }
         } catch (e) {
