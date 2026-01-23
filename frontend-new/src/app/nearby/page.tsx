@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { MapPin, Navigation as NavigationIcon, RefreshCw, AlertCircle } from "lucide-react"
+import getSupabaseClient from "@/lib/supabaseClient"
 
 // Stations will be fetched dynamically from backend based on user coordinates
 
@@ -19,7 +20,7 @@ function getAQICategory(aqi: number) {
 }
 
 export default function NearbyPage() {
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number; name?: string } | null>(null)
   const [locationError, setLocationError] = useState<string | null>(null)
   const [isLoadingLocation, setIsLoadingLocation] = useState(false)
   const [stations, setStations] = useState<any[]>([])
@@ -40,14 +41,18 @@ export default function NearbyPage() {
 
   const fetchNearbyStations = async (lat:number, lng:number, rKm?: number) => {
     console.log('🔄 fetchNearbyStations CALLED with:', { lat, lng, rKm, currentRadius: radiusKm })
-    try {
+      try {
       setStationsError(null)
       let cities: any[] = []
 
       // Use /cities/all directly - it's much faster than /satellite/map
       try {
         console.log('🌐 Fetching cities from:', `${API_BASE_URL}/cities/all`)
-        const allRes = await fetch(`${API_BASE_URL}/cities/all`)
+        const supabase = getSupabaseClient()
+        const sessionResp = supabase ? await supabase.auth.getSession() : null
+        const token = sessionResp?.data?.session?.access_token
+        const commonHeaders: any = token ? { Authorization: `Bearer ${token}` } : {}
+        const allRes = await fetch(`${API_BASE_URL}/cities/all`, { headers: { 'Content-Type': 'application/json', ...commonHeaders } })
         console.log('📡 cities/all response status:', allRes.status, allRes.ok)
         if (allRes.ok) {
           const allJson = await allRes.json()
@@ -83,7 +88,11 @@ export default function NearbyPage() {
       // Fetch stations for each nearby city
       const stationPromises = nearbyCities.map(async (c:any) => {
         try {
-          const r = await fetch(`${API_BASE_URL}/live/aqi/stations?city=${encodeURIComponent(c.city)}`)
+          const supabase = getSupabaseClient()
+          const sessionResp = supabase ? await supabase.auth.getSession() : null
+          const token = sessionResp?.data?.session?.access_token
+          const headers: any = token ? { Authorization: `Bearer ${token}` } : {}
+          const r = await fetch(`${API_BASE_URL}/live/aqi/stations?city=${encodeURIComponent(c.city)}`, { headers: { 'Content-Type': 'application/json', ...headers } })
           if (!r.ok) return []
           const data = await r.json()
           return (data.stations || [])
@@ -159,14 +168,36 @@ export default function NearbyPage() {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         console.log('✅ Geolocation success:', position.coords)
-        const coords = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
+        const lat = position.coords.latitude
+        const lng = position.coords.longitude
+        
+        // Get location name via reverse geocoding
+        let locationName = `${lat.toFixed(4)}, ${lng.toFixed(4)}`
+        try {
+          console.log('🗺️ Reverse geocoding:', lat, lng)
+          const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
+            headers: { 'User-Agent': 'AirPollutionApp/1.0' }
+          })
+          if (geoRes.ok) {
+            const geoData = await geoRes.json()
+            console.log('📍 Reverse geocoding response:', geoData)
+            const addr = geoData.address || {}
+            const locality = addr.village || addr.town || addr.city || addr.suburb || addr.county
+            const state = addr.state
+            if (locality) {
+              locationName = state ? `${locality}, ${state}` : locality
+              console.log('✅ Location name resolved:', locationName)
+            }
+          }
+        } catch (e) {
+          console.warn('⚠️ Reverse geocoding failed:', e)
         }
+        
+        const coords = { lat, lng, name: locationName }
         setUserLocation(coords)
         setIsLoadingLocation(false)
         console.log('🚀 Calling fetchNearbyStations with coords:', coords)
-        await fetchNearbyStations(coords.lat, coords.lng)
+        await fetchNearbyStations(lat, lng)
       },
       (error) => {
         console.error('❌ Geolocation error:', error)
@@ -186,7 +217,7 @@ export default function NearbyPage() {
             break
         }
         // Fallback to Delhi coordinates
-        const delhiCoords = { lat: 28.6139, lng: 77.2090 }
+        const delhiCoords = { lat: 28.6139, lng: 77.2090, name: 'Delhi, India' }
         console.log('🏙️ Setting fallback location:', delhiCoords)
         setUserLocation(delhiCoords)
         setLocationError(errorMessage)
@@ -266,14 +297,15 @@ export default function NearbyPage() {
                   <div className="flex items-center space-x-4">
                     <MapPin className="h-5 w-5 text-primary" />
                     <div>
-                      <p className="font-medium">Current Location Detected</p>
+                      <p className="font-medium text-lg">{userLocation.name || 'Current Location'}</p>
                       <p className="text-sm text-muted-foreground">
                         {userLocation.lat.toFixed(4)}, {userLocation.lng.toFixed(4)}
                       </p>
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Showing air quality stations within {radiusKm}km of your location
+                    Showing {stations.length} station{stations.length !== 1 ? 's' : ''} within {radiusKm}km of your location
+                    {stations.length > 0 && ` • Closest: ${stations[0].distance}km away`}
                   </p>
                 </div>
               ) : (
@@ -286,7 +318,15 @@ export default function NearbyPage() {
           </Card>
 
           <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-semibold">Nearby Stations</h2>
+            <div>
+              <h2 className="text-2xl font-semibold">Nearby Stations</h2>
+              {stations.length > 0 && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Found {stations.length} station{stations.length !== 1 ? 's' : ''} • 
+                  Average AQI: {Math.round(stations.reduce((sum, s) => sum + (s.aqi ?? s.aqi_value ?? 0), 0) / stations.length)}
+                </p>
+              )}
+            </div>
             <Button onClick={refreshStations} variant="outline">
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh Data
@@ -323,17 +363,39 @@ export default function NearbyPage() {
                     </div>
 
                     <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
+                      <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">Distance:</span>
-                        <span className="font-medium">{station.distance} km</span>
+                        <div className="flex items-center gap-2">
+                          <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-primary rounded-full transition-all"
+                              style={{ width: `${Math.max(10, Math.min(100, (1 - station.distance / radiusKm) * 100))}%` }}
+                            />
+                          </div>
+                          <span className="font-medium">{station.distance} km</span>
+                        </div>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">UID:</span>
-                        <span className="font-medium">{station.uid ?? 'N/A'}</span>
-                      </div>
+                      {station.coordinates && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Coordinates:</span>
+                          <span className="font-medium text-xs">
+                            {station.coordinates.lat.toFixed(4)}, {station.coordinates.lng.toFixed(4)}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
-                    <Button className="w-full" variant="outline">
+                    <Button 
+                      className="w-full" 
+                      variant="outline"
+                      onClick={() => {
+                        const lat = station.coordinates?.lat
+                        const lng = station.coordinates?.lng
+                        if (lat && lng) {
+                          window.open(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`, '_blank')
+                        }
+                      }}
+                    >
                       <MapPin className="h-4 w-4 mr-2" />
                       View on Map
                     </Button>
@@ -368,15 +430,21 @@ export default function NearbyPage() {
                       Maximum distance for nearby stations
                     </p>
                   </div>
-                  <select className="px-3 py-1 border border-border rounded text-sm" value={radiusKm} onChange={(e) => {
-                    const v = Number(e.target.value)
-                    setRadiusKm(v)
-                    if (userLocation) fetchNearbyStations(userLocation.lat, userLocation.lng, v)
-                  }}>
+                  <select 
+                    className="px-3 py-1 border border-border rounded text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary" 
+                    value={radiusKm} 
+                    onChange={(e) => {
+                      const v = Number(e.target.value)
+                      setRadiusKm(v)
+                      if (userLocation) fetchNearbyStations(userLocation.lat, userLocation.lng, v)
+                    }}
+                  >
                     <option value={5}>5 km</option>
                     <option value={10}>10 km</option>
                     <option value={15}>15 km</option>
+                    <option value={20}>20 km</option>
                     <option value={25}>25 km</option>
+                    <option value={30}>30 km</option>
                   </select>
                 </div>
 
