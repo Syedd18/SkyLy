@@ -55,6 +55,14 @@ BASE_DIR = Path(__file__).parent
 DATABASE_URL = os.getenv("DATABASE_URL")
 USERS_DB_PATH = os.getenv("USERS_DB_PATH") or str(BASE_DIR / "users.db")
 
+# Log which database is being used at startup
+if DATABASE_URL:
+    print(f"AUTH: ✓ Using PostgreSQL database (DATABASE_URL is set)")
+else:
+    print(f"AUTH: ⚠️  WARNING - Using SQLite at {USERS_DB_PATH}")
+    print(f"AUTH: ⚠️  SQLite is EPHEMERAL on Render - data will be lost on redeploy!")
+    print(f"AUTH: ⚠️  Set DATABASE_URL to your Supabase PostgreSQL connection string")
+
 @contextmanager
 def get_conn():
     """Yield a tuple (conn, is_pg). If DATABASE_URL is set, returns a psycopg connection."""
@@ -318,9 +326,12 @@ def supabase_get_user_from_token(token: str) -> Optional[dict]:
 
 def ensure_local_user_from_supabase(email: str, name: Optional[str] = None) -> int:
     """Ensure a corresponding local user record exists. Returns local user id."""
+    print(f"AUTH: ensure_local_user_from_supabase called with email={email}, name={name}")
     existing = get_user_by_email(email)
     if existing:
-        return existing["id"] if isinstance(existing, dict) and "id" in existing else existing[0]
+        user_id = existing["id"] if isinstance(existing, dict) and "id" in existing else existing[0]
+        print(f"AUTH: Found existing user with id={user_id}")
+        return user_id
 
     # Insert a placeholder password hash (random) so DB constraints are satisfied
     # Keep password under 72 bytes for bcrypt
@@ -394,32 +405,41 @@ def create_user(email: str, name: str, password: str):
         raise
 
 def get_user_favorites(user_id: int):
+    print(f"AUTH: get_user_favorites called for user_id={user_id}")
     with get_conn() as (conn, is_pg):
         cur = conn.cursor()
+        print(f"AUTH: Using {'PostgreSQL' if is_pg else 'SQLite'} for fetching favorites")
         if is_pg:
             cur.execute(
                 "SELECT city_name, added_at FROM favorite_cities WHERE user_id = %s ORDER BY added_at DESC",
                 (user_id,),
             )
             rows = cur.fetchall()
-            return [{"city": r[0], "added_at": r[1]} for r in rows]
+            result = [{"city": r[0], "added_at": r[1]} for r in rows]
+            print(f"AUTH: Found {len(result)} favorites for user {user_id}: {[f['city'] for f in result]}")
+            return result
         else:
             cur.execute(
                 "SELECT city_name, added_at FROM favorite_cities WHERE user_id = ? ORDER BY added_at DESC",
                 (user_id,),
             )
-            return [{"city": row[0], "added_at": row[1]} for row in cur.fetchall()]
+            result = [{"city": row[0], "added_at": row[1]} for row in cur.fetchall()]
+            print(f"AUTH: Found {len(result)} favorites for user {user_id}: {[f['city'] for f in result]}")
+            return result
 
 def add_favorite_city(user_id: int, city_name: str):
+    print(f"AUTH: add_favorite_city called with user_id={user_id}, city_name={city_name}")
     try:
         with get_conn() as (conn, is_pg):
             cur = conn.cursor()
+            print(f"AUTH: Using {'PostgreSQL' if is_pg else 'SQLite'} for favorites")
             if is_pg:
                 cur.execute(
                     "INSERT INTO favorite_cities (user_id, city_name) VALUES (%s, %s)",
                     (user_id, city_name),
                 )
                 conn.commit()
+                print(f"AUTH: Successfully added favorite {city_name} for user {user_id}")
                 return True
             else:
                 cur.execute(
@@ -427,8 +447,10 @@ def add_favorite_city(user_id: int, city_name: str):
                     (user_id, city_name),
                 )
                 conn.commit()
+                print(f"AUTH: Successfully added favorite {city_name} for user {user_id}")
                 return True
-    except Exception:
+    except Exception as e:
+        print(f"AUTH: Failed to add favorite: {e}")
         return False
 
 def remove_favorite_city(user_id: int, city_name: str):
