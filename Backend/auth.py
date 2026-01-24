@@ -110,10 +110,10 @@ def init_db():
     with get_conn() as (conn, is_pg):
         cur = conn.cursor()
         if is_pg:
-            # Postgres schema
+            # Postgres schema - use app_ prefix to avoid conflicts with Supabase tables
             cur.execute(
                 """
-                CREATE TABLE IF NOT EXISTS users (
+                CREATE TABLE IF NOT EXISTS app_users (
                     id SERIAL PRIMARY KEY,
                     email TEXT UNIQUE NOT NULL,
                     name TEXT NOT NULL,
@@ -125,7 +125,7 @@ def init_db():
 
             cur.execute(
                 """
-                CREATE TABLE IF NOT EXISTS favorite_cities (
+                CREATE TABLE IF NOT EXISTS app_favorite_cities (
                     id SERIAL PRIMARY KEY,
                     user_id INTEGER NOT NULL,
                     city_name TEXT NOT NULL,
@@ -137,7 +137,7 @@ def init_db():
 
             cur.execute(
                 """
-                CREATE TABLE IF NOT EXISTS user_preferences (
+                CREATE TABLE IF NOT EXISTS app_user_preferences (
                     id SERIAL PRIMARY KEY,
                     user_id INTEGER UNIQUE NOT NULL,
                     theme TEXT DEFAULT 'dark',
@@ -148,7 +148,7 @@ def init_db():
             )
             conn.commit()
         else:
-            # SQLite schema
+            # SQLite schema (no prefix needed, local file)
             cur.execute(
                 """
                 CREATE TABLE IF NOT EXISTS users (
@@ -340,16 +340,18 @@ def ensure_local_user_from_supabase(email: str, name: Optional[str] = None) -> i
     with get_conn() as (conn, is_pg):
         cur = conn.cursor()
         if is_pg:
-            cur.execute("INSERT INTO users (email, name, password_hash) VALUES (%s, %s, %s) RETURNING id", (email, name or email, pw_hash))
+            cur.execute("INSERT INTO app_users (email, name, password_hash) VALUES (%s, %s, %s) RETURNING id", (email, name or email, pw_hash))
             user_id = cur.fetchone()[0]
-            cur.execute("INSERT INTO user_preferences (user_id) VALUES (%s)", (user_id,))
+            cur.execute("INSERT INTO app_user_preferences (user_id) VALUES (%s)", (user_id,))
             conn.commit()
+            print(f"AUTH: Created new user with id={user_id}")
             return user_id
         else:
             cur.execute("INSERT INTO users (email, name, password_hash) VALUES (?, ?, ?)", (email, name or email, pw_hash))
             user_id = cur.lastrowid
             cur.execute("INSERT INTO user_preferences (user_id) VALUES (?)", (user_id,))
             conn.commit()
+            print(f"AUTH: Created new user with id={user_id}")
             return user_id
 
 # ---------------- DB utility functions ----------------
@@ -363,7 +365,7 @@ def get_user_by_email(email: str):
     with get_conn() as (conn, is_pg):
         cur = conn.cursor()
         if is_pg:
-            cur.execute("SELECT id, email, name, password_hash, created_at FROM users WHERE email = %s", (email,))
+            cur.execute("SELECT id, email, name, password_hash, created_at FROM app_users WHERE email = %s", (email,))
             row = cur.fetchone()
             return _row_to_dict(cur, row)
         else:
@@ -380,11 +382,11 @@ def create_user(email: str, name: str, password: str):
             cur = conn.cursor()
             if is_pg:
                 cur.execute(
-                    "INSERT INTO users (email, name, password_hash) VALUES (%s, %s, %s) RETURNING id",
+                    "INSERT INTO app_users (email, name, password_hash) VALUES (%s, %s, %s) RETURNING id",
                     (email, name, password_hash),
                 )
                 user_id = cur.fetchone()[0]
-                cur.execute("INSERT INTO user_preferences (user_id) VALUES (%s)", (user_id,))
+                cur.execute("INSERT INTO app_user_preferences (user_id) VALUES (%s)", (user_id,))
                 conn.commit()
                 return user_id
             else:
@@ -411,7 +413,7 @@ def get_user_favorites(user_id: int):
         print(f"AUTH: Using {'PostgreSQL' if is_pg else 'SQLite'} for fetching favorites")
         if is_pg:
             cur.execute(
-                "SELECT city_name, added_at FROM favorite_cities WHERE user_id = %s ORDER BY added_at DESC",
+                "SELECT city_name, added_at FROM app_favorite_cities WHERE user_id = %s ORDER BY added_at DESC",
                 (user_id,),
             )
             rows = cur.fetchall()
@@ -435,7 +437,7 @@ def add_favorite_city(user_id: int, city_name: str):
             print(f"AUTH: Using {'PostgreSQL' if is_pg else 'SQLite'} for favorites")
             if is_pg:
                 cur.execute(
-                    "INSERT INTO favorite_cities (user_id, city_name) VALUES (%s, %s)",
+                    "INSERT INTO app_favorite_cities (user_id, city_name) VALUES (%s, %s)",
                     (user_id, city_name),
                 )
                 conn.commit()
@@ -458,7 +460,7 @@ def remove_favorite_city(user_id: int, city_name: str):
         cur = conn.cursor()
         if is_pg:
             cur.execute(
-                "DELETE FROM favorite_cities WHERE user_id = %s AND city_name = %s",
+                "DELETE FROM app_favorite_cities WHERE user_id = %s AND city_name = %s",
                 (user_id, city_name),
             )
             conn.commit()
