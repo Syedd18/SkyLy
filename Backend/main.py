@@ -995,6 +995,47 @@ def share_report(req: ShareRequest = Body(...)):
         raise HTTPException(status_code=500, detail=f"Failed to generate report: {str(e)}")
 
 
+# ==================== DEBUG/HEALTH ENDPOINTS ====================
+@app.get("/api/debug/db-status")
+async def get_db_status():
+    """Check database connection status - useful for debugging"""
+    from Backend.auth import DATABASE_URL, USERS_DB_PATH, get_conn
+    
+    db_type = "PostgreSQL" if DATABASE_URL else "SQLite"
+    db_location = "Supabase (persistent)" if DATABASE_URL else f"{USERS_DB_PATH} (EPHEMERAL!)"
+    
+    # Try to query the database
+    try:
+        with get_conn() as (conn, is_pg):
+            cur = conn.cursor()
+            if is_pg:
+                cur.execute("SELECT COUNT(*) FROM users")
+                user_count = cur.fetchone()[0]
+                cur.execute("SELECT COUNT(*) FROM favorite_cities")
+                fav_count = cur.fetchone()[0]
+            else:
+                cur.execute("SELECT COUNT(*) FROM users")
+                user_count = cur.fetchone()[0]
+                cur.execute("SELECT COUNT(*) FROM favorite_cities")
+                fav_count = cur.fetchone()[0]
+        
+        return {
+            "status": "connected",
+            "database_type": db_type,
+            "database_location": db_location,
+            "user_count": user_count,
+            "favorites_count": fav_count,
+            "warning": None if DATABASE_URL else "SQLite is ephemeral on Render! Set DATABASE_URL to Supabase PostgreSQL."
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "database_type": db_type,
+            "database_location": db_location,
+            "error": str(e)
+        }
+
+
 # ==================== USER AUTHENTICATION ENDPOINTS ====================
 @app.post("/api/auth/register", response_model=Token)
 async def register(user_data: UserRegister):
@@ -1090,13 +1131,21 @@ async def supabase_callback(data: SupabaseCallbackData):
             raise HTTPException(status_code=401, detail="Invalid Supabase token")
         
         email = user_info.get("email")
-        user_id = user_info.get("id")
+        supabase_user_id = user_info.get("id")
+        
+        # Get name from user_metadata (set by OAuth provider like Google)
+        user_metadata = user_info.get("user_metadata", {})
+        name = user_metadata.get("full_name") or user_metadata.get("name") or email.split("@")[0]
+        
+        print(f"SUPABASE CALLBACK: email={email}, supabase_id={supabase_user_id}, name={name}")
         
         if not email:
             raise HTTPException(status_code=400, detail="No email in Supabase user")
         
-        # Ensure local user exists
-        local_id = ensure_local_user_from_supabase(email, user_id)
+        # Ensure local user exists (pass the actual name, not Supabase UUID)
+        local_id = ensure_local_user_from_supabase(email, name)
+        
+        print(f"SUPABASE CALLBACK: local_id={local_id}")
         
         # Create backend JWT token
         backend_token = create_access_token(data={"sub": email})
@@ -1107,7 +1156,7 @@ async def supabase_callback(data: SupabaseCallbackData):
             "user": {
                 "id": local_id,
                 "email": email,
-                "name": user_info.get("user_metadata", {}).get("name"),
+                "name": name,
             }
         }
     except HTTPException as e:
@@ -1137,7 +1186,8 @@ async def add_favorite(city_name: str, current_user: dict = Depends(get_current_
     """Add city to user's favorites"""
     success = add_favorite_city(current_user["id"], city_name)
     if not success:
-        raise HTTPException(status_code=400, detail="City already in favorites")
+        # Return 200 instead of 400 - idempotent operation (already favorited is still success)
+        return {"status": "success", "message": f"{city_name} is already in favorites"}
     
     return {"status": "success", "message": f"{city_name} added to favorites"}
 
