@@ -1009,9 +1009,9 @@ async def get_db_status():
         with get_conn() as (conn, is_pg):
             cur = conn.cursor()
             if is_pg:
-                cur.execute("SELECT COUNT(*) FROM users")
+                cur.execute("SELECT COUNT(*) FROM app_users")
                 user_count = cur.fetchone()[0]
-                cur.execute("SELECT COUNT(*) FROM favorite_cities")
+                cur.execute("SELECT COUNT(*) FROM app_favorite_cities")
                 fav_count = cur.fetchone()[0]
             else:
                 cur.execute("SELECT COUNT(*) FROM users")
