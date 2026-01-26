@@ -16,8 +16,7 @@ SkyLy provides an end-to-end solution for AQI data analysis by combining a Pytho
 - Backend APIs for structured access to processed AQI data  
 - City-wise AQI visualization and data exploration  
 - Clean, responsive dashboard built with Next.js and Tailwind CSS  
-- Component-based UI with context-driven state management  
-- Type-safe frontend development using TypeScript  
+- Component-based UI with context-driven state management    
 - Cloud deployment–ready setup using Vercel (frontend) and Render (backend)
 
 ---
