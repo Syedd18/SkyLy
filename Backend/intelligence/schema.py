@@ -32,22 +32,23 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 INTEL_DB_PATH = os.getenv("INTEL_DB_PATH", str(Path(__file__).parent.parent / "intelligence.db"))
 
 
-def _resolve_ipv4(db_url: str) -> dict:
-    """Resolve the DB hostname to IPv4 and return connect kwargs.
+def _force_ipv4_url(db_url: str) -> str:
+    """Replace hostname with IPv4 address to avoid IPv6 resolution.
     
     Render doesn't support IPv6 outbound, and Supabase's direct host
-    (db.*.supabase.co) often resolves to IPv6 first.  By resolving to
-    IPv4 ourselves and passing hostaddr, we force an IPv4 connection.
+    (db.*.supabase.co) resolves to IPv6 on some systems. This forces IPv4.
     """
     try:
         parsed = urlparse(db_url)
         hostname = parsed.hostname
         if hostname:
+            # Get IPv4 address only
             ipv4 = socket.getaddrinfo(hostname, None, socket.AF_INET)[0][4][0]
-            return {"conninfo": db_url, "hostaddr": ipv4}
+            # Replace hostname with IP in the URL
+            return db_url.replace(f"@{hostname}", f"@{ipv4}")
     except (socket.gaierror, IndexError, OSError):
-        pass  # Fall back to default resolution
-    return {"conninfo": db_url}
+        pass  # Fall back to original URL
+    return db_url
 
 
 # --------------- Connection helper ---------------
@@ -60,8 +61,8 @@ def get_intel_conn():
        Development: Falls back to SQLite if DATABASE_URL not set.
     """
     if DATABASE_URL and HAS_PSYCOPG:
-        conn_kwargs = _resolve_ipv4(DATABASE_URL)
-        conn = psycopg.connect(**conn_kwargs)
+        ipv4_url = _force_ipv4_url(DATABASE_URL)
+        conn = psycopg.connect(ipv4_url)
         try:
             yield conn, True
         finally:
