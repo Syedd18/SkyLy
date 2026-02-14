@@ -190,8 +190,10 @@ export default function MapComponent() {
               // Prefer the highest-station AQI for this city if available
               const stationInfo = maxStationMap[city.name]
               const aqi = (stationInfo && typeof stationInfo.aqi === 'number') ? stationInfo.aqi : (typeof city.aqi === 'number' ? city.aqi : null)
-              const color = aqi !== null ? getAQICategory(aqi).color : '#999999'
-              const radius = Math.max(8, Math.min(16, (aqi ?? 20) / 8))
+              // Skip cities with no valid AQI (null, 0, or negative)
+              if (aqi === null || aqi <= 0) return null
+              const color = getAQICategory(aqi).color
+              const radius = Math.max(8, Math.min(16, aqi / 8))
               return (
                 <CircleMarker 
                   key={city.name} 
@@ -235,7 +237,7 @@ export default function MapComponent() {
           <div className="absolute top-4 left-4 z-[1000]">
             <Badge variant="secondary" className="bg-background/95 backdrop-blur-sm border border-border/50 shadow-sm">
               <MapPin className="h-3 w-3 mr-1" />
-              {cities.length} Cities
+              {cities.filter(c => { const s = maxStationMap[c.name]; const a = (s && typeof s.aqi === 'number') ? s.aqi : c.aqi; return typeof a === 'number' && a > 0; }).length} Cities
             </Badge>
           </div>
         </div>

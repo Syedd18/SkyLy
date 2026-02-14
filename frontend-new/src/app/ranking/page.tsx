@@ -112,7 +112,7 @@ export default function RankingPage() {
   // Exclude cities with missing AQI (using station maxAqi if available) from the ranking list
   const filteredCities = citiesData.filter(city => {
     const effective = (typeof city.maxAqi === 'number') ? city.maxAqi : city.aqi
-    if (effective === null || effective === undefined) return false
+    if (effective === null || effective === undefined || effective <= 0) return false
     if (filter === "all") return true
     const category = getAQICategory(effective).label.toLowerCase()
     return category.includes(filter)

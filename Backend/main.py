@@ -513,8 +513,8 @@ def get_available_cities():
 
     # Filter out cities with AQI of 0 or None (0 means sensor offline / no real data)
     with_aqi = sorted([r for r in results if r.get("aqi") and r["aqi"] > 0], key=lambda x: x["aqi"], reverse=True)
-    without_aqi = sorted([r for r in results if not r.get("aqi") or r["aqi"] <= 0], key=lambda x: x["name"])
-    results = with_aqi + without_aqi
+    # Only return cities with genuine AQI data
+    results = with_aqi
 
     return {"cities": results, "count": len(results)}
 
