@@ -111,8 +111,6 @@ export default function RankingPage() {
 
   // Exclude cities with missing AQI (using station maxAqi if available) from the ranking list
   const filteredCities = citiesData.filter(city => {
-    // Exclude known out-of-scope city (Salem from other dataset)
-    if (city.name && city.name.toString().toLowerCase() === 'salem') return false
     const effective = (typeof city.maxAqi === 'number') ? city.maxAqi : city.aqi
     if (effective === null || effective === undefined) return false
     if (filter === "all") return true

@@ -419,10 +419,10 @@ def get_available_cities():
             if coord:
                 info["lat"], info["lng"] = coord
 
-            # Try to fetch WAQI AQI for the city with a small timeout
+            # Try to fetch WAQI AQI for the city with a reasonable timeout
             url = f"https://api.waqi.info/feed/{name}/"
             try:
-                res = requests.get(url, params={"token": WAQI_TOKEN}, timeout=3)
+                res = requests.get(url, params={"token": WAQI_TOKEN}, timeout=8)
                 data = res.json()
                 if data.get("status") == "ok":
                     aqi_value = data.get("data", {}).get("aqi")
@@ -439,18 +439,17 @@ def get_available_cities():
         return info
 
     results = []
-    with ThreadPoolExecutor(max_workers=15) as executor:
+    with ThreadPoolExecutor(max_workers=30) as executor:
         futures = [executor.submit(fetch_city_info, name) for name in csv_cities]
         for future in as_completed(futures):
             res = future.result()
             if res:
                 results.append(res)
 
-    # Keep only cities for which WAQI lookup returned a numeric AQI (exclude None)
-    results = [r for r in results if r.get("aqi") is not None]
-
-    # Sort by AQI descending
-    results.sort(key=lambda x: x["aqi"], reverse=True)
+    # Sort: cities with AQI first (descending), then cities without AQI alphabetically
+    with_aqi = sorted([r for r in results if r.get("aqi") is not None], key=lambda x: x["aqi"], reverse=True)
+    without_aqi = sorted([r for r in results if r.get("aqi") is None], key=lambda x: x["name"])
+    results = with_aqi + without_aqi
 
     return {"cities": results, "count": len(results)}
 
