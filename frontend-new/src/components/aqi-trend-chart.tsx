@@ -9,8 +9,6 @@ interface AQITrendChartProps {
   location: string
 }
 
-const API_BASE_URL = "http://127.0.0.1:8000"
-
 export function AQITrendChart({ location }: AQITrendChartProps) {
   const [trendData, setTrendData] = useState<TrendData[]>([])
   const [loading, setLoading] = useState(true)

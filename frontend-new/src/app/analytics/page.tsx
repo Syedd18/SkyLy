@@ -1,23 +1,28 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
+import { cn } from "@/lib/utils"
 
-const API_BASE_URL = "http://127.0.0.1:8000"
-import { Navigation } from "@/components/navigation"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || ""
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Badge } from "@/components/ui/badge"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, AreaChart, Area } from "recharts"
-import { BarChart3, TrendingUp, Calendar, Filter } from "lucide-react"
-
-const AQI_TREND_DATA = [
-  { month: "Jan", delhi: 185, mumbai: 95, bangalore: 65 },
-  { month: "Feb", delhi: 192, mumbai: 88, bangalore: 72 },
-  { month: "Mar", delhi: 178, mumbai: 102, bangalore: 68 },
-  { month: "Apr", delhi: 165, mumbai: 85, bangalore: 62 },
-  { month: "May", delhi: 198, mumbai: 115, bangalore: 78 },
-  { month: "Jun", delhi: 175, mumbai: 92, bangalore: 65 },
-]
+import { 
+  BarChart3, 
+  Calendar, 
+  TrendingUp, 
+  TrendingDown,
+  Activity,
+  Zap,
+  RefreshCw,
+  Sparkles,
+  Sun,
+  Cloud,
+  CloudRain,
+  Snowflake
+} from "lucide-react"
 
 // Pollutant distribution removed — values were static placeholders and not city-specific.
 
@@ -81,7 +86,7 @@ function computeSeasonalPatterns(series: {date: string; aqi: number}[]) {
     const m = (d.date || '').slice(5,7)
     const month = Number(m)
     if (!month) return
-    Object.entries(seasons).forEach(([name, s]) => {
+    Object.values(seasons).forEach((s) => {
       if (s.months.includes(month)) {
         s.sum += (d.aqi || 0)
         s.count += 1
@@ -92,6 +97,37 @@ function computeSeasonalPatterns(series: {date: string; aqi: number}[]) {
     name,
     avg: s.count ? Math.round(s.sum / s.count) : NaN,
   }))
+}
+
+// Season icon and color helper
+function getSeasonInfo(name: string) {
+  switch (name) {
+    case 'Winter':
+      return { icon: <Snowflake className="w-5 h-5 text-blue-500" />, color: 'text-blue-500', bg: 'bg-blue-500/5', text: 'text-blue-500' }
+    case 'Spring':
+      return { icon: <Sun className="w-5 h-5 text-amber-500" />, color: 'text-amber-500', bg: 'bg-amber-500/5', text: 'text-amber-500' }
+    case 'Summer':
+      return { icon: <Zap className="w-5 h-5 text-orange-500" />, color: 'text-orange-500', bg: 'bg-orange-500/5', text: 'text-orange-500' }
+    case 'Monsoon':
+      return { icon: <CloudRain className="w-5 h-5 text-emerald-500" />, color: 'text-emerald-500', bg: 'bg-emerald-500/5', text: 'text-emerald-500' }
+    default:
+      return { icon: <Cloud className="w-5 h-5 text-gray-500" />, color: 'text-gray-500', bg: 'bg-gray-500/5', text: 'text-gray-500' }
+  }
+}
+
+// Custom tooltip for charts
+function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number; dataKey: string }>; label?: string }) {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="bg-background/95 backdrop-blur-sm border border-border/50 rounded-xl p-3 shadow-xl">
+      <p className="text-sm font-medium mb-1">{label}</p>
+      {payload.map((p, i) => (
+        <p key={i} className="text-sm text-muted-foreground">
+          AQI: <span className="font-semibold text-foreground">{p.value}</span>
+        </p>
+      ))}
+    </div>
+  )
 }
 
 export default function AnalyticsPage() {
@@ -115,16 +151,9 @@ export default function AnalyticsPage() {
     }
 
     fetchCities()
-  }, [])
-
-  useEffect(() => {
-    // On initial load, fetch data for selected city if present
-    if (selectedCity) {
-      fetchAnalytics(selectedCity)
-    }
   }, [selectedCity])
 
-  const fetchAnalytics = async (city: string) => {
+  const fetchAnalytics = useCallback(async (city: string) => {
     setLoadingData(true)
     try {
       const res = await fetch(`${API_BASE_URL}/analytics?city=${encodeURIComponent(city)}`)
@@ -138,32 +167,45 @@ export default function AnalyticsPage() {
     } finally {
       setLoadingData(false)
     }
-  }
+  }, [])
 
-  // reduce tick density for long series
-  const tickInterval = series.length ? Math.max(0, Math.floor(series.length / 6)) : 0
+  useEffect(() => {
+    // On initial load, fetch data for selected city if present
+    if (selectedCity) {
+      fetchAnalytics(selectedCity)
+    }
+  }, [selectedCity, fetchAnalytics])
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
-
-      <main className="container mx-auto px-4 py-8">
-        <div className="space-y-8">
-          <div className="text-center space-y-4">
-            <h1 className="text-4xl font-bold tracking-tight">Air Quality Analytics</h1>
+      {/* Hero Section */}
+      <section className="relative overflow-hidden border-b border-border/40 bg-gradient-to-b from-primary/5 via-background to-background">
+        <div className="absolute inset-0 bg-grid-pattern opacity-5" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+        
+        <div className="mx-auto px-4 sm:px-6 lg:px-10 xl:px-16 2xl:px-24 py-16 relative z-10">
+          <div className="text-center space-y-6 max-w-3xl mx-auto animate-fade-in-up">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
+              <Sparkles className="w-4 h-4 text-primary" />
+              <span className="text-sm font-medium text-primary">Data-Driven Insights</span>
+            </div>
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+              Air Quality Analytics
+            </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Comprehensive analysis of air quality trends and patterns
+              Comprehensive analysis of air quality trends, patterns, and seasonal variations
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <div className="flex items-center space-x-2">
-              <label className="text-sm font-medium">City</label>
+          {/* City Selector */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-10 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+            <div className="flex items-center gap-3 p-1 rounded-xl bg-card/50 backdrop-blur-sm border border-border/50">
               <Select value={selectedCity} onValueChange={setSelectedCity}>
-                <SelectTrigger className="w-56 bg-card border border-border text-foreground z-50">
+                <SelectTrigger className="w-56 border-0 bg-transparent focus:ring-0">
                   <SelectValue placeholder="Select city" />
                 </SelectTrigger>
-                <SelectContent className="z-50">
+                <SelectContent>
                   {cities.length === 0 ? (
                     <div className="p-2 text-sm text-muted-foreground">Loading cities...</div>
                   ) : (
@@ -173,161 +215,300 @@ export default function AnalyticsPage() {
                   )}
                 </SelectContent>
               </Select>
+              <button 
+                onClick={() => selectedCity && fetchAnalytics(selectedCity)} 
+                disabled={!selectedCity || loadingData} 
+                className={cn(
+                  "px-4 py-2 rounded-lg font-medium transition-all duration-200",
+                  "bg-primary text-white hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/25",
+                  "disabled:opacity-50 disabled:cursor-not-allowed",
+                  "flex items-center gap-2"
+                )}
+              >
+                <RefreshCw className={cn("w-4 h-4", loadingData && "animate-spin")} />
+                {loadingData ? 'Loading...' : 'Update'}
+              </button>
             </div>
+          </div>
+        </div>
+      </section>
 
-            {/* Removed time range select — showing all available data from CSV. */}
-            <div className="flex items-center">
-              <button onClick={() => selectedCity && fetchAnalytics(selectedCity)} disabled={!selectedCity || loadingData} className="px-4 py-2 bg-primary text-white rounded disabled:opacity-50">{loadingData ? 'Loading...' : 'Update Data'}</button>
-            </div>
-            {(!loadingData && series.length === 0) && (
-              <div className="p-4 text-center text-sm text-muted-foreground">No AQI series data available for this city. Click "Update Data" to refresh.</div>
-            )}
+      <main className="mx-auto px-4 sm:px-6 lg:px-10 xl:px-16 2xl:px-24 py-8">
+        <div className="space-y-8">
+          {/* Summary Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in-up" style={{ animationDelay: '150ms' }}>
+            <Card className="overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-lg transition-all duration-300">
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-1">Average AQI</p>
+                    {loadingData ? (
+                      <Skeleton className="h-9 w-20" />
+                    ) : (
+                      <p className="text-3xl font-bold">
+                        {series.length ? Math.round(series.reduce((s, it) => s + (it.aqi || 0), 0) / series.length) : 'N/A'}
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-1">Current Period</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-primary/10">
+                    <Activity className="w-6 h-6 text-primary" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-lg transition-all duration-300">
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-1">Trend Change</p>
+                    {loadingData ? (
+                      <Skeleton className="h-9 w-24" />
+                    ) : (
+                      (() => {
+                        const avgCurrent = series.length ? (series.reduce((sum, item) => sum + (item.aqi || 0), 0) / series.length) : NaN
+                        const previous = series.slice(-6)
+                        const avgPrev = previous.length ? (previous.reduce((sum, item) => sum + (item.aqi || 0), 0) / previous.length) : NaN
+                        const change = (isFinite(avgPrev) && avgPrev !== 0) ? ((avgCurrent - avgPrev) / avgPrev * 100) : NaN
+                        const isPositive = isFinite(change) && change > 0
+                        return (
+                          <div className="flex items-center gap-2">
+                            <p className={cn("text-3xl font-bold", isPositive ? "text-red-500" : "text-green-500")}>
+                              {isFinite(change) ? `${change > 0 ? '+' : ''}${change.toFixed(1)}%` : 'N/A'}
+                            </p>
+                            {isFinite(change) && (isPositive ? <TrendingUp className="w-5 h-5 text-red-500" /> : <TrendingDown className="w-5 h-5 text-green-500" />)}
+                          </div>
+                        )
+                      })()
+                    )}
+                    <p className="text-xs text-muted-foreground mt-1">vs Previous Period</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-amber-500/10">
+                    <TrendingUp className="w-6 h-6 text-amber-500" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-lg transition-all duration-300">
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-1">Peak Value</p>
+                    {loadingData ? (
+                      <Skeleton className="h-9 w-16" />
+                    ) : (
+                      <p className="text-3xl font-bold text-red-500">
+                        {series.length ? Math.max(...series.map(it => it.aqi || 0)) : 'N/A'}
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-1">Maximum AQI</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-red-500/10">
+                    <Zap className="w-6 h-6 text-red-500" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
-          {/* Summary cards (historical) */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card>
-              <CardContent className="p-6 text-center">
-                <div className="text-2xl font-bold mb-2">{series.length ? (Math.round(series.reduce((s, it) => s + (it.aqi || 0), 0) / series.length)) : 'N/A'}</div>
-                <p className="text-sm text-muted-foreground">Current Average</p>
-                <p className="text-xs text-muted-foreground uppercase">AQI</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-6 text-center">
-                {(() => {
-                  const avgCurrent = series.length ? (series.reduce((sum, item) => sum + (item.aqi || 0), 0) / series.length) : NaN
-                  const previous = series.slice(-6)
-                  const avgPrev = previous.length ? (previous.reduce((sum, item) => sum + (item.aqi || 0), 0) / previous.length) : NaN
-                  const change = (isFinite(avgPrev) && avgPrev !== 0) ? ((avgCurrent - avgPrev) / avgPrev * 100) : NaN
-                  return (
-                    <div>
-                      <div className={`text-2xl font-bold mb-2 ${isFinite(change) && change > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                        {isFinite(change) ? `${Math.abs(change).toFixed(1)}%` : 'N/A'}
-                      </div>
-                      <p className="text-sm text-muted-foreground">Change from Previous Period</p>
-                    </div>
-                  )
-                })()}
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-6 text-center">
-                <div className="text-2xl font-bold mb-2">{series.length ? Math.max(...series.map(it => it.aqi || 0)) : 'N/A'}</div>
-                <p className="text-sm text-muted-foreground">Peak Value</p>
-                <p className="text-xs text-muted-foreground uppercase">AQI</p>
-              </CardContent>
-            </Card>
-          </div>
+          {(!loadingData && series.length === 0) && (
+            <div className="p-8 text-center border border-dashed border-border rounded-xl bg-muted/30">
+              <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">No AQI data available for this city. Select a city and click Update.</p>
+            </div>
+          )}
 
-          {/* Stack charts vertically to avoid cramped visuals */}
-          <div className="grid grid-cols-1 gap-8">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <BarChart3 className="h-5 w-5" />
-                  <span>Seasonal Analysis</span>
+          {/* Charts Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+            {/* Seasonal Analysis */}
+            <Card className="overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-lg transition-all duration-300">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-blue-500/10">
+                    <BarChart3 className="h-5 w-5 text-blue-500" />
+                  </div>
+                  <div>
+                    <span className="text-lg">Seasonal Analysis</span>
+                    <p className="text-sm font-normal text-muted-foreground mt-0.5">Average AQI by season</p>
+                  </div>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={420}>
-                  {series.length ? (
-                    (() => {
-                      const seasonal = computeSeasonalData(series)
-                      return seasonal.length ? (
-                        <BarChart data={seasonal}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="season" tick={{fontSize:12}} />
-                          <YAxis />
-                          <Tooltip />
-                          <Bar dataKey="aqi" fill="#3b82f6" />
-                        </BarChart>
-                      ) : (
-                        <div className="p-6 text-center text-sm text-muted-foreground">Not enough data to compute seasonal patterns for this city.</div>
-                      )
-                    })()
-                  ) : (
-                    <div className="p-6 text-center text-sm text-muted-foreground">No data loaded yet. Click "Update Data" to fetch series for the selected city.</div>
-                  )}
-                </ResponsiveContainer>
+              <CardContent className="pt-4">
+                {loadingData ? (
+                  <div className="space-y-4">
+                    <Skeleton className="h-64 w-full" />
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={300}>
+                    {series.length ? (
+                      (() => {
+                        const seasonal = computeSeasonalData(series)
+                        return seasonal.length ? (
+                          <BarChart data={seasonal}>
+                            <defs>
+                              <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#3b82f6" stopOpacity={1} />
+                                <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.6} />
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
+                            <XAxis dataKey="season" tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} axisLine={{ stroke: 'hsl(var(--border))' }} />
+                            <YAxis tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} axisLine={{ stroke: 'hsl(var(--border))' }} />
+                            <Tooltip content={<CustomTooltip />} />
+                            <Bar dataKey="aqi" fill="url(#barGradient)" radius={[6, 6, 0, 0]} />
+                          </BarChart>
+                        ) : (
+                          <div className="h-full flex items-center justify-center text-muted-foreground">Not enough data for seasonal analysis</div>
+                        )
+                      })()
+                    ) : (
+                      <div className="h-full flex items-center justify-center text-muted-foreground">Select a city to view data</div>
+                    )}
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Yearly Comparison */}
+            <Card className="overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-lg transition-all duration-300">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-red-500/10">
+                    <Calendar className="h-5 w-5 text-red-500" />
+                  </div>
+                  <div>
+                    <span className="text-lg">Yearly Comparison</span>
+                    <p className="text-sm font-normal text-muted-foreground mt-0.5">Year-over-year AQI trends</p>
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                {loadingData ? (
+                  <Skeleton className="h-64 w-full" />
+                ) : (
+                  <ResponsiveContainer width="100%" height={300}>
+                    {series.length ? (
+                      <LineChart data={computeYearlyComparison(series)}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
+                        <XAxis dataKey="year" tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} axisLine={{ stroke: 'hsl(var(--border))' }} />
+                        <YAxis tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} axisLine={{ stroke: 'hsl(var(--border))' }} />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Line type="monotone" dataKey="aqi" stroke="#ED1B24" strokeWidth={3} dot={{ fill: "#ED1B24", strokeWidth: 2, r: 5 }} activeDot={{ r: 8, strokeWidth: 2, stroke: '#fff' }} />
+                      </LineChart>
+                    ) : (
+                      <div className="h-full flex items-center justify-center text-muted-foreground">Select a city to view data</div>
+                    )}
+                  </ResponsiveContainer>
+                )}
               </CardContent>
             </Card>
           </div>
 
-          {/* Historical Trends (Area Chart) */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Calendar className="h-5 w-5" />
-                <span>Historical Trends</span>
+          {/* Historical Trends - Full Width */}
+          <Card className="overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm hover:shadow-lg transition-all duration-300 animate-fade-in-up" style={{ animationDelay: '250ms' }}>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <span className="text-lg">Historical Trends</span>
+                  <p className="text-sm font-normal text-muted-foreground mt-0.5">Complete AQI timeline for {selectedCity || 'selected city'}</p>
+                </div>
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={420}>
-                {series.length ? (
-                  <AreaChart data={series}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" tickFormatter={(value) => {
-                      const date = new Date(value)
-                      return isNaN(+date) ? value : date.toLocaleDateString(undefined, { month: 'short', year: '2-digit' })
-                    }} />
-                    <YAxis />
-                    <Tooltip labelFormatter={(value) => {
-                      const date = new Date(value)
-                      return isNaN(+date) ? value : date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
-                    }} />
-                    <Area type="monotone" dataKey="aqi" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.1} strokeWidth={2} />
-                  </AreaChart>
-                ) : (
-                  <div className="p-6 text-center text-sm text-muted-foreground">No AQI historical series to display for the selected city.</div>
-                )}
-              </ResponsiveContainer>
+            <CardContent className="pt-4">
+              {loadingData ? (
+                <Skeleton className="h-80 w-full" />
+              ) : (
+                <ResponsiveContainer width="100%" height={350}>
+                  {series.length ? (
+                    <AreaChart data={series}>
+                      <defs>
+                        <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                          <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
+                      <XAxis 
+                        dataKey="date" 
+                        tickFormatter={(value) => {
+                          const date = new Date(value)
+                          return isNaN(+date) ? value : date.toLocaleDateString(undefined, { month: 'short', year: '2-digit' })
+                        }}
+                        tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                        axisLine={{ stroke: 'hsl(var(--border))' }}
+                      />
+                      <YAxis tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} axisLine={{ stroke: 'hsl(var(--border))' }} />
+                      <Tooltip 
+                        content={<CustomTooltip />}
+                        labelFormatter={(value) => {
+                          const date = new Date(value)
+                          return isNaN(+date) ? value : date.toLocaleDateString(undefined, { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })
+                        }}
+                      />
+                      <Area type="monotone" dataKey="aqi" stroke="hsl(var(--primary))" fill="url(#areaGradient)" strokeWidth={2} />
+                    </AreaChart>
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-muted-foreground">Select a city to view historical data</div>
+                  )}
+                </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
 
-          {/* Yearly Comparison */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Calendar className="h-5 w-5" />
-                <span>Yearly Comparison</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={computeYearlyComparison(series)}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="year" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="aqi" stroke="#ef4444" strokeWidth={3} dot={{ fill: "#ef4444", strokeWidth: 2, r: 6 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* Seasonal Patterns (cards) */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Seasonal Patterns</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {computeSeasonalPatterns(series).map((s) => (
-                  <div key={s.name} className="text-center p-4 border rounded-lg">
-                    <h3 className="font-semibold text-lg mb-2">{s.name} {s.name === 'Winter' ? '(Dec-Feb)' : s.name === 'Spring' ? '(Mar-May)' : s.name === 'Summer' ? '(Jun-Aug)' : '(Sep-Nov)'}</h3>
-                    <p className="text-2xl font-bold mb-1">{Number.isFinite(s.avg) ? s.avg : 'N/A'}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {s.name === 'Winter' && 'Highest AQI due to cold weather and heating'}
-                      {s.name === 'Spring' && 'Dust storms and agricultural burning'}
-                      {s.name === 'Summer' && 'Better dispersion with higher temperatures'}
-                      {s.name === 'Monsoon' && 'Rain helps wash away pollutants'}
-                    </p>
-                  </div>
-                ))}
+          {/* Seasonal Patterns Cards */}
+          <div className="animate-fade-in-up" style={{ animationDelay: '300ms' }}>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20">
+                <Sparkles className="h-5 w-5 text-amber-500" />
               </div>
-            </CardContent>
-          </Card>
+              <div>
+                <h2 className="text-xl font-semibold">Seasonal Patterns</h2>
+                <p className="text-sm text-muted-foreground">Understanding air quality variations across seasons</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {computeSeasonalPatterns(series).map((s, index) => {
+                const info = getSeasonInfo(s.name)
+                return (
+                  <Card 
+                    key={s.name} 
+                    className={cn(
+                      "overflow-hidden border-border/40 hover:shadow-lg transition-all duration-300 group",
+                      info.bg
+                    )}
+                    style={{ animationDelay: `${350 + index * 50}ms` }}
+                  >
+                    <CardContent className="p-5">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="p-2.5 rounded-xl bg-muted/50">
+                          {info.icon}
+                        </div>
+                        <Badge variant="outline" className="text-xs">
+                          {s.name === 'Winter' ? 'Dec-Feb' : s.name === 'Spring' ? 'Mar-May' : s.name === 'Summer' ? 'Jun-Aug' : 'Sep-Nov'}
+                        </Badge>
+                      </div>
+                      <h3 className="font-semibold text-lg mb-1 group-hover:text-primary transition-colors">{s.name}</h3>
+                      <p className={cn("text-3xl font-bold mb-2", info.text)}>
+                        {Number.isFinite(s.avg) ? s.avg : 'N/A'}
+                        {Number.isFinite(s.avg) && <span className="text-sm font-normal text-muted-foreground ml-1">AQI</span>}
+                      </p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        {s.name === 'Winter' && 'Higher AQI due to cold weather inversions and heating'}
+                        {s.name === 'Spring' && 'Dust storms and agricultural activities'}
+                        {s.name === 'Summer' && 'Better dispersion with warmer temperatures'}
+                        {s.name === 'Monsoon' && 'Rain washes away atmospheric pollutants'}
+                      </p>
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
+          </div>
 
           {/* Pollutant Distribution and Key Insights removed — they were static placeholders and not city-specific. */}
 

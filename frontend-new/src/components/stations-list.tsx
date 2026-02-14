@@ -5,15 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { MapPin } from "lucide-react"
 
-const API_BASE_URL = "http://127.0.0.1:8000"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || ""
+const api = (path: string) => (API_BASE_URL ? `${API_BASE_URL}${path}` : path)
 
 function getAQICategory(aqi: number) {
-  if (aqi <= 50) return { label: "Good", color: "bg-green-500", colorHex: '#22c55e' }
-  if (aqi <= 100) return { label: "Moderate", color: "bg-yellow-500", colorHex: '#f59e0b' }
-  if (aqi <= 150) return { label: "Unhealthy for Sensitive Groups", color: "bg-orange-500", colorHex: '#f97316' }
-  if (aqi <= 200) return { label: "Unhealthy", color: "bg-red-500", colorHex: '#ef4444' }
-  if (aqi <= 300) return { label: "Very Unhealthy", color: "bg-purple-500", colorHex: '#8b5cf6' }
-  return { label: "Hazardous", color: "bg-red-900", colorHex: '#7f1d1d' }
+  if (aqi <= 50) return { label: "Good", cssVar: "--aqi-good" }
+  if (aqi <= 100) return { label: "Moderate", cssVar: "--aqi-moderate" }
+  if (aqi <= 150) return { label: "Unhealthy for Sensitive Groups", cssVar: "--aqi-unhealthy-sensitive" }
+  if (aqi <= 200) return { label: "Unhealthy", cssVar: "--aqi-unhealthy" }
+  if (aqi <= 300) return { label: "Very Unhealthy", cssVar: "--aqi-very-unhealthy" }
+  return { label: "Hazardous", cssVar: "--aqi-hazardous" }
 }
 
 interface Station {
@@ -38,7 +39,7 @@ export function StationsList({ city }: { city: string }) {
       setLoading(true)
       setError(null)
       try {
-        const res = await fetch(`${API_BASE_URL}/live/aqi/stations?city=${encodeURIComponent(city)}`)
+        const res = await fetch(api(`/live/aqi/stations?city=${encodeURIComponent(city)}`))
         if (res.ok) {
           const data = await res.json()
           setStations((data && (data.stations || data)) || [])
@@ -70,14 +71,17 @@ export function StationsList({ city }: { city: string }) {
                 <h3 className="text-lg font-semibold">{s.station_name}</h3>
                 <p className="text-sm text-muted-foreground">{s.time || ''}</p>
               </div>
-              <Badge className={`${getAQICategory(s.aqi ?? 0).color} text-white`}>
+              <Badge 
+                className="text-white"
+                style={{ backgroundColor: `rgb(var(${getAQICategory(s.aqi ?? 0).cssVar}))` }}
+              >
                 {s.category}
               </Badge>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-center">
-              <div className="text-3xl font-bold mb-1" style={{ color: getAQICategory(s.aqi ?? 0).colorHex }}>{s.aqi}</div>
+              <div className="text-3xl font-bold mb-1" style={{ color: `rgb(var(${getAQICategory(s.aqi ?? 0).cssVar}))` }}>{s.aqi}</div>
               <p className="text-xs text-muted-foreground uppercase">AQI</p>
             </div>
 
@@ -94,7 +98,17 @@ export function StationsList({ city }: { city: string }) {
             </div>
 
             <div className="mt-4">
-              <button className="w-full px-3 py-2 rounded-md bg-primary text-white flex items-center justify-center">
+              <button 
+                className="w-full px-3 py-2 rounded-md bg-primary text-white flex items-center justify-center hover:bg-primary/90 transition-colors"
+                onClick={() => {
+                  if (s.coordinates?.lat && s.coordinates?.lng) {
+                    window.open(`https://www.google.com/maps/search/?api=1&query=${s.coordinates.lat},${s.coordinates.lng}`, '_blank')
+                  } else {
+                    // Fallback to searching by station name
+                    window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.station_name + ' ' + city)}`, '_blank')
+                  }
+                }}
+              >
                 <MapPin className="h-4 w-4 mr-2" /> View on Map
               </button>
             </div>

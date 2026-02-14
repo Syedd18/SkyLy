@@ -1,23 +1,74 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Navigation } from "@/components/navigation"
+import { useState, useEffect, useCallback } from "react"
 import { HeroSection } from "@/components/hero-section"
 import { PollutantCards } from "@/components/pollutant-cards"
 import { StationsList } from "@/components/stations-list"
+import { HealthAdvisoryPanel } from "@/components/health-advisory-panel"
 import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { AQIData } from "@/types"
 import { useAuth } from "@/contexts/auth-context"
+import { 
+  MapPin, 
+  Heart, 
+  ChevronDown, 
+  ChevronUp, 
+  Satellite, 
+  Radio,
+  Thermometer,
+  Wind,
+  Navigation2,
+  RefreshCw
+} from "lucide-react"
 
-const API_BASE_URL = "http://127.0.0.1:8000"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || ""
+
+interface CityData {
+  name: string
+  lat?: number
+  lng?: number
+  city?: string
+}
+
+interface SatelliteData {
+  pm2_5?: number
+  pm10?: number
+  nitrogen_dioxide?: number
+  ozone?: number
+  sulphur_dioxide?: number
+  carbon_monoxide?: number
+  us_aqi?: number
+  european_aqi?: number
+  temperature?: number
+  dew?: number
+  h?: number
+  wind_speed?: number
+  p?: number
+  wind_dir?: number
+  lat?: number
+  lng?: number
+}
+
+interface StationData {
+  components?: Record<string, number | undefined>
+  aqi?: number
+  name?: string
+  station_name?: string
+  time?: string
+}
+
+interface FavoriteItem {
+  city: string
+}
 
 function getAQICategory(aqi: number) {
-  if (aqi <= 50) return { label: "Good", color: "bg-green-500", colorHex: '#22c55e' }
-  if (aqi <= 100) return { label: "Moderate", color: "bg-yellow-500", colorHex: '#f59e0b' }
-  if (aqi <= 150) return { label: "Unhealthy for Sensitive Groups", color: "bg-orange-500", colorHex: '#f97316' }
-  if (aqi <= 200) return { label: "Unhealthy", color: "bg-red-500", colorHex: '#ef4444' }
-  if (aqi <= 300) return { label: "Very Unhealthy", color: "bg-purple-500", colorHex: '#8b5cf6' }
-  return { label: "Hazardous", color: "bg-red-900", colorHex: '#7f1d1d' }
+  if (aqi <= 50) return { label: "Good", color: "rgb(var(--aqi-good))", bgColor: "rgb(var(--aqi-good-bg))" }
+  if (aqi <= 100) return { label: "Moderate", color: "rgb(var(--aqi-moderate))", bgColor: "rgb(var(--aqi-moderate-bg))" }
+  if (aqi <= 150) return { label: "Sensitive", color: "rgb(var(--aqi-unhealthy-sensitive))", bgColor: "rgb(var(--aqi-unhealthy-sensitive-bg))" }
+  if (aqi <= 200) return { label: "Unhealthy", color: "rgb(var(--aqi-unhealthy))", bgColor: "rgb(var(--aqi-unhealthy-bg))" }
+  if (aqi <= 300) return { label: "Very Unhealthy", color: "rgb(var(--aqi-very-unhealthy))", bgColor: "rgb(var(--aqi-very-unhealthy-bg))" }
+  return { label: "Hazardous", color: "rgb(var(--aqi-hazardous))", bgColor: "rgb(var(--aqi-hazardous-bg))" }
 }
 
 export default function LiveAQIPage() {
@@ -29,49 +80,99 @@ export default function LiveAQIPage() {
   const { isAuthenticated, token } = useAuth()
   const [isFavorite, setIsFavorite] = useState(false)
   const [favoritesLoading, setFavoritesLoading] = useState(false)
+  const [satellite, setSatellite] = useState<SatelliteData | null>(null)
+  const [showStations, setShowStations] = useState(false)
+  const [showSatellite, setShowSatellite] = useState(false)
+  const [selectedStation, setSelectedStation] = useState<StationData | null>(null)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+
+  // Calculate distance between two coordinates using Haversine formula
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371
+    const dLat = (lat2 - lat1) * Math.PI / 180
+    const dLon = (lon2 - lon1) * Math.PI / 180
+    const a = 
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2)
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+    return R * c
+  }
+
+  // Find nearest city from available cities
+  const findNearestCity = useCallback(async (userLat: number, userLon: number): Promise<string> => {
+    try {
+      const citiesRes = await fetch(`${API_BASE_URL}/cities/all`)
+      if (!citiesRes.ok) return "Delhi"
+      
+      const citiesData = await citiesRes.json()
+      const cities = citiesData.cities || citiesData
+      
+      if (!Array.isArray(cities) || cities.length === 0) return "Delhi"
+
+      let nearestCity = "Delhi"
+      let minDistance = Infinity
+
+      cities.forEach((city: CityData) => {
+        if (city.lat && city.lng) {
+          const distance = calculateDistance(userLat, userLon, city.lat, city.lng)
+          if (distance < minDistance) {
+            minDistance = distance
+            nearestCity = city.name
+          }
+        }
+      })
+
+      return nearestCity
+    } catch {
+      return "Delhi"
+    }
+  }, [])
 
   useEffect(() => {
     if (autoDetect) {
+      setLoading(true)
       navigator.geolocation.getCurrentPosition(
         async (position) => {
-          // In a real app, you'd reverse geocode to get city name
+          const { latitude, longitude } = position.coords
+          const nearestCity = await findNearestCity(latitude, longitude)
+          setLocation(nearestCity)
+          setAutoDetect(false)
+          setLoading(false)
         },
         () => {
-          // Fallback to default location
+          setLocation("Delhi")
+          setAutoDetect(false)
+          setLoading(false)
         }
       )
     }
-  }, [autoDetect])
+  }, [autoDetect, findNearestCity])
 
-  const [satellite, setSatellite] = useState<any | null>(null)
-  const [showStations, setShowStations] = useState(false)
-  const [showSatellite, setShowSatellite] = useState(false)
-  const [selectedStation, setSelectedStation] = useState<any | null>(null)
+  const fetchAqiData = useCallback(async () => {
+    try {
+      setIsRefreshing(true)
+      const liveRes = await fetch(`${API_BASE_URL}/live/aqi?city=${encodeURIComponent(location)}`)
+
+      if (liveRes.ok) {
+        const data = await liveRes.json()
+        setAqiData(data)
+      } else {
+        setAqiData(null)
+      }
+    } catch {
+      setAqiData(null)
+    } finally {
+      setLoading(false)
+      setIsRefreshing(false)
+    }
+  }, [location])
 
   useEffect(() => {
-    const fetchAqiData = async () => {
-      try {
-        const liveRes = await fetch(`${API_BASE_URL}/live/aqi?city=${encodeURIComponent(location)}`)
-
-        if (liveRes.ok) {
-          const data = await liveRes.json()
-          setAqiData(data)
-        } else {
-          setAqiData(null)
-        }
-      } catch (error) {
-        console.error("Failed to fetch AQI data:", error)
-        setAqiData(null)
-      } finally {
-        setLoading(false)
-      }
-    }
-
     fetchAqiData()
-    // Auto-refresh every 5 minutes
     const interval = setInterval(fetchAqiData, 5 * 60 * 1000)
     return () => clearInterval(interval)
-  }, [location])
+  }, [fetchAqiData])
 
   const handleToggleSatellite = async () => {
     if (showSatellite) {
@@ -86,90 +187,63 @@ export default function LiveAQIPage() {
         setSatellite(await res.json())
         setShowSatellite(true)
       }
-    } catch (err) {
-      console.error('Satellite fetch failed', err)
+    } catch {
+      // Satellite fetch failed silently
     }
   }
 
-  const handleToggleStations = () => setShowStations(s => !s)
+  const handleLocateMe = () => setAutoDetect(true)
 
-  const handleLocateMe = () => {
-    // enable auto-detect flow and attempt to get position
-    setAutoDetect(true)
-    if (navigator.geolocation) {
-      setLoading(true)
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          try {
-            // Reverse geocode using Nominatim (OpenStreetMap)
-            const { latitude, longitude } = pos.coords
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`)
-            if (res.ok) {
-              const data = await res.json()
-              // Extract city from address
-              const city = data.address?.city || data.address?.town || data.address?.village || data.address?.state || 'Delhi'
-              console.log('Detected location:', city)
-              setLocation(city)
-            } else {
-              console.warn('Reverse geocode failed')
-              setLoading(false)
-            }
-          } catch (err) {
-            console.error('Geocoding error:', err)
-            setLoading(false)
-          }
-        },
-        (err) => {
-          console.warn('Locate failed', err)
-          setLoading(false)
+  const checkFavorite = useCallback(async () => {
+    if (!isAuthenticated || !token || !aqiData) return
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/favorites`, { headers: { Authorization: `Bearer ${token}` } })
+      if (res.ok) {
+        const data = await res.json()
+        const normalize = (s: string | undefined) => {
+          if (!s) return ''
+          const parts = s.split(',').map(p => p.trim()).filter(Boolean)
+          const knownCountries = ['india']
+          while (parts.length > 1 && knownCountries.includes(parts[parts.length - 1].toLowerCase())) parts.pop()
+          return (parts.length ? parts[parts.length - 1].toLowerCase() : '')
         }
-      )
+        const target = normalize(aqiData.city ?? location)
+        setIsFavorite(data.favorites?.some((f: FavoriteItem) => normalize(f.city) === target) ?? false)
+      }
+    } catch {
+      // Failed to check favorites silently
     }
-  }
+  }, [isAuthenticated, token, aqiData, location])
 
   useEffect(() => {
-    const checkFavorite = async () => {
-      if (!isAuthenticated || !token || !aqiData) return
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/favorites`, { headers: { Authorization: `Bearer ${token}` } })
-        if (res.ok) {
-          const data = await res.json()
-          const normalize = (s: string | undefined) => {
-            if (!s) return ''
-            const parts = s.split(',').map(p => p.trim()).filter(Boolean)
-            // drop trailing country token like 'India'
-            const knownCountries = ['india']
-            while (parts.length > 1 && knownCountries.includes(parts[parts.length - 1].toLowerCase())) parts.pop()
-            // prefer the most specific segment (usually the last part, e.g., 'Delhi')
-            return (parts.length ? parts[parts.length - 1].toLowerCase() : '')
-          }
-          const target = normalize(aqiData.city ?? location)
-          setIsFavorite(data.favorites?.some((f: any) => normalize(f.city) === target) ?? false)
-        }
-      } catch (err) {
-        console.error('Failed to check favorites', err)
-      }
-    }
     checkFavorite()
-  }, [isAuthenticated, token, aqiData])
+  }, [checkFavorite])
 
   const toggleFavorite = async () => {
     if (!isAuthenticated || !token || !aqiData) return
     setFavoritesLoading(true)
     try {
-      // Optimistic UI: toggle local state immediately for snappy response
       const prev = isFavorite
       setIsFavorite(!prev)
       const method = prev ? 'DELETE' : 'POST'
-      // Use the normalized `location` (user-visible city) when calling the API
-      const res = await fetch(`${API_BASE_URL}/api/favorites/${encodeURIComponent(location)}`, { method, headers: { Authorization: `Bearer ${token}` } })
+      const res = await fetch(`${API_BASE_URL}/api/favorites/${encodeURIComponent(location)}`, { 
+        method, 
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        } 
+      })
       if (!res.ok) {
-        // revert on failure
+        const errorData = await res.json().catch(() => ({}))
+        const detail = errorData.detail || ''
+        if ((method === 'POST' && detail.includes('already')) || 
+            (method === 'DELETE' && detail.includes('not found'))) {
+          return
+        }
         setIsFavorite(prev)
-        console.error('Failed to toggle favorite, server responded with', res.status)
       }
-    } catch (err) {
-      console.error('Failed to toggle favorite', err)
+    } catch {
+      // Failed to toggle favorite
     } finally {
       setFavoritesLoading(false)
     }
@@ -177,187 +251,291 @@ export default function LiveAQIPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
-
-      <main className="container mx-auto px-4 py-4 md:py-8 space-y-6 md:space-y-8">
-        <div className="rounded-2xl overflow-hidden shadow-lg border border-border bg-card">
-          <div className="px-4 md:px-6 py-4 md:py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-border gap-4">
-            <div className="flex-1 min-w-0">
-              <h2 className="text-lg md:text-2xl font-semibold text-foreground truncate">Real-time Air Quality Index (AQI)</h2>
-              <a className="text-primary underline text-sm md:text-base" href="#">{location}, India</a>
-              <div className="text-xs md:text-sm text-muted-foreground mt-1">Last Updated: {aqiData ? new Date(aqiData.time).toLocaleString() : 'Loading...'}</div>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-              <button className="flex-1 sm:flex-none px-3 py-2 text-xs md:text-sm border border-border rounded-md bg-background text-foreground hover:bg-accent" onClick={handleLocateMe}>Locate me</button>
-              <button className="flex-1 sm:flex-none px-3 py-2 text-xs md:text-sm border border-border rounded-md bg-background text-foreground hover:bg-accent" onClick={toggleFavorite} disabled={!isAuthenticated || favoritesLoading}>
-                {isFavorite ? 'Remove' : 'Add Favorite'}
-              </button>
-            </div>
-          </div>
-
-          <HeroSection
-            aqiData={aqiData}
-            loading={loading}
-            location={location}
-            onLocationChange={setLocation}
-            onSelectedStationChange={setSelectedStation}
-          />
+      {/* Page Header */}
+      <section className="relative overflow-hidden border-b border-border/40 bg-gradient-to-b from-primary/5 via-background to-background">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute right-0 top-0 h-96 w-96 -translate-y-1/2 translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
         </div>
 
-        {aqiData && (
-          <div className="space-y-4 md:space-y-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <h3 className="text-base md:text-lg font-medium">Pollutant Values</h3>
-              <label className="flex items-center space-x-2 text-xs md:text-sm">
-                <input
-                  type="checkbox"
-                  checked={showPollutants}
-                  onChange={(e) => setShowPollutants(e.target.checked)}
-                  className="rounded"
-                />
-                <span>Show pollutant details</span>
-              </label>
-            </div>
-            {showPollutants && (
-              <div className="space-y-4">
-                {/* WAQI / Station pollutant values (prefer selected station, fallback to city feed) */}
-                <div>
-                  <h4 className="text-sm font-medium mb-3">WAQI Pollutant Measurements</h4>
-                  <PollutantCards components={(selectedStation?.components) || (aqiData?.components) || {}} />
-                </div>
-
-                {/* Satellite / model pollutant values (optional) */}
-                {showSatellite && satellite && (
-                  <div>
-                    <h4 className="text-sm font-medium mb-3">Satellite Model (Open‑Meteo) Measurements</h4>
-                    {(() => {
-                      const satComp: Record<string, any> = {}
-                      if (typeof satellite.pm2_5 !== 'undefined') satComp.pm2_5 = satellite.pm2_5
-                      if (typeof satellite.pm10 !== 'undefined') satComp.pm10 = satellite.pm10
-                      if (typeof satellite.nitrogen_dioxide !== 'undefined') satComp.no2 = satellite.nitrogen_dioxide
-                      if (typeof satellite.ozone !== 'undefined') satComp.o3 = satellite.ozone
-                      if (typeof satellite.sulphur_dioxide !== 'undefined') satComp.so2 = satellite.sulphur_dioxide
-                      if (typeof satellite.carbon_monoxide !== 'undefined') satComp.co = satellite.carbon_monoxide
-                      if (typeof satellite.us_aqi !== 'undefined') satComp.us_aqi = satellite.us_aqi
-                      if (typeof satellite.european_aqi !== 'undefined') satComp.european_aqi = satellite.european_aqi
-                      // include weather fields for display
-                      if (typeof satellite.temperature !== 'undefined') satComp.temperature = satellite.temperature
-                      if (typeof satellite.dew !== 'undefined') satComp.dew = satellite.dew
-                      if (typeof satellite.h !== 'undefined') satComp.h = satellite.h
-                      if (typeof satellite.wind_speed !== 'undefined') satComp.wind_speed = satellite.wind_speed
-                      if (typeof satellite.p !== 'undefined') satComp.p = satellite.p
-                      if (typeof satellite.wind_dir !== 'undefined') satComp.wind_dir = satellite.wind_dir
-
-                      return <PollutantCards components={satComp} />
-                    })()}
-                  </div>
+        <div className="relative mx-auto px-4 py-8 sm:px-6 lg:px-10 xl:px-16 2xl:px-24">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="animate-fade-in">
+              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl">
+                Live Air Quality
+              </h1>
+              <div className="mt-2 flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-primary" />
+                <span className="text-lg text-muted-foreground">{location}, India</span>
+                {aqiData && (
+                  <span className="text-sm text-muted-foreground">
+                    · Updated {new Date(aqiData.time).toLocaleTimeString()}
+                  </span>
                 )}
               </div>
-            )}
-            {showPollutants && showSatellite && satellite && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-medium">Satellite Model (Open-Meteo)</h3>
-                      <div className="text-xs text-muted-foreground">Latest</div>
-                    </div>
-                    {satellite.us_aqi === null && satellite.pm2_5 === null && satellite.pm10 === null ? (
-                      <div className="mt-3 text-center text-muted-foreground py-4">
-                        No satellite data available for this location
-                      </div>
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-2 animate-fade-in" style={{ animationDelay: '100ms' }}>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => fetchAqiData()}
+                disabled={isRefreshing}
+              >
+                <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleLocateMe}
+              >
+                <Navigation2 className="mr-2 h-4 w-4" />
+                Locate Me
+              </Button>
+              {isAuthenticated && (
+                <Button 
+                  variant={isFavorite ? "default" : "outline"}
+                  size="sm"
+                  onClick={toggleFavorite}
+                  disabled={favoritesLoading}
+                >
+                  <Heart className={`mr-2 h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
+                  {isFavorite ? 'Saved' : 'Save'}
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <main className="mx-auto px-4 py-6 sm:px-6 lg:px-10 xl:px-16 2xl:px-24">
+        <div className="space-y-8">
+          {/* Hero Section with AQI Gauge */}
+          <div className="animate-fade-in-up" style={{ animationDelay: '150ms' }}>
+            <Card className="overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm">
+              <HeroSection
+                aqiData={aqiData}
+                loading={loading}
+                location={location}
+                onLocationChange={setLocation}
+                onSelectedStationChange={setSelectedStation}
+              />
+            </Card>
+          </div>
+
+          {/* Health Advisory Panel */}
+          {aqiData && aqiData.aqi != null && (
+            <div className="animate-fade-in-up" style={{ animationDelay: '175ms' }}>
+              <HealthAdvisoryPanel aqi={selectedStation?.aqi ?? Number(aqiData.aqi)} />
+            </div>
+          )}
+
+          {/* Pollutant Details Section */}
+          {aqiData && (
+            <div className="space-y-6 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+              {/* Section Header */}
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold">Pollutant Details</h2>
+                  <p className="text-sm text-muted-foreground">Current air quality components</p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <label className="flex cursor-pointer items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={showPollutants}
+                      onChange={(e) => setShowPollutants(e.target.checked)}
+                      className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                    />
+                    <span>Show details</span>
+                    {showPollutants ? (
+                      <ChevronUp className="h-4 w-4 text-muted-foreground" />
                     ) : (
-                      <>
-                        <div className="mt-3 space-y-1">
-                          <div className="flex items-center justify-between">
-                            <div className="text-sm text-muted-foreground">US AQI</div>
-                            {typeof satellite.us_aqi !== 'undefined' && satellite.us_aqi !== null ? (
-                              (() => {
-                                const v = Number(satellite.us_aqi)
-                                const cat = getAQICategory(isNaN(v) ? 0 : v)
-                                return (
-                                  <div className={`px-2 py-1 rounded-full text-xs text-white ${cat.color}`}>{cat.label}</div>
-                                )
-                              })()
-                            ) : null}
-                          </div>
-                          <div className="text-lg font-semibold" style={{ color: (satellite?.us_aqi != null) ? getAQICategory(Number(satellite.us_aqi)).colorHex : undefined }}>{satellite.us_aqi ?? 'N/A'}</div>
-                        </div>
-                        <div className="mt-3 grid grid-cols-2 gap-3 text-sm text-muted-foreground">
-                          <div>
-                            <div className="text-xs">PM2.5</div>
-                            <div className="font-medium text-foreground">{(satellite.pm2_5 !== null && satellite.pm2_5 !== undefined) ? satellite.pm2_5 : 'N/A'}</div>
-                          </div>
-                          <div>
-                            <div className="text-xs">PM10</div>
-                            <div className="font-medium text-foreground">{(satellite.pm10 !== null && satellite.pm10 !== undefined) ? satellite.pm10 : 'N/A'}</div>
-                          </div>
-                        </div>
-                      </>
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
                     )}
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-medium">Weather</h3>
-                      <div className="text-xs text-muted-foreground">Current</div>
-                    </div>
-                    <div className="mt-3">
-                      <div className="text-sm text-muted-foreground">Temperature</div>
-                      <div className="text-lg font-semibold">{satellite.temperature ?? 'N/A'}°C</div>
-                    </div>
-                    <div className="mt-3">
-                      <div className="text-sm text-muted-foreground">Wind</div>
-                      <div className="text-lg font-semibold">{satellite.wind_speed ? `${satellite.wind_speed} m/s` : 'N/A'}</div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-medium">City Info</h3>
-                      <div className="text-xs text-muted-foreground">Coords</div>
-                    </div>
-                    <div className="mt-3 text-sm text-muted-foreground">
-                      <div>Lat: <span className="text-foreground font-medium">{satellite.lat ?? 'N/A'}</span></div>
-                      <div>Lng: <span className="text-foreground font-medium">{satellite.lng ?? 'N/A'}</span></div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            <div>
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-semibold">Stations in {location}</h2>
-                <div className="flex items-center space-x-2">
-                  <button
-                    className="px-3 py-1 rounded-md bg-primary text-white"
-                    onClick={() => setShowStations((s) => !s)}
-                  >
-                    {showStations ? 'Hide Stations' : 'Show Stations'}
-                  </button>
-                  <button
-                    className="px-3 py-1 rounded-md border"
-                    onClick={handleToggleSatellite}
-                  >
-                    {showSatellite ? 'Hide Satellite Data' : 'Show Satellite Data'}
-                  </button>
+                  </label>
                 </div>
               </div>
 
-              <div className="mt-4">
-                {showStations && <StationsList city={location} />}
-              </div>
-            </div>
-          </div>
-        )}
+              {showPollutants && (
+                <div className="space-y-6">
+                  {/* WAQI Pollutant Values */}
+                  <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
+                    <CardContent className="p-6">
+                      <div className="mb-4 flex items-center gap-2">
+                        <Radio className="h-5 w-5 text-primary" />
+                        <h3 className="font-medium">Station Measurements</h3>
+                        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">WAQI</span>
+                      </div>
+                      <PollutantCards components={(selectedStation?.components) || (aqiData?.components) || {}} />
+                    </CardContent>
+                  </Card>
 
-        <div className="py-6 text-center text-sm text-muted-foreground">
-          Powered by Syed Muhammad Rizvi and Ishan Singh
+                  {/* Satellite Data Section */}
+                  {showSatellite && satellite && (
+                    <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
+                      <CardContent className="p-6">
+                        <div className="mb-4 flex items-center gap-2">
+                          <Satellite className="h-5 w-5 text-primary" />
+                          <h3 className="font-medium">Satellite Model Data</h3>
+                          <span className="rounded-full bg-secondary/10 px-2 py-0.5 text-xs text-secondary">Open-Meteo</span>
+                        </div>
+                        <PollutantCards components={{
+                          ...(satellite.pm2_5 !== undefined && { pm2_5: satellite.pm2_5 }),
+                          ...(satellite.pm10 !== undefined && { pm10: satellite.pm10 }),
+                          ...(satellite.nitrogen_dioxide !== undefined && { no2: satellite.nitrogen_dioxide }),
+                          ...(satellite.ozone !== undefined && { o3: satellite.ozone }),
+                          ...(satellite.sulphur_dioxide !== undefined && { so2: satellite.sulphur_dioxide }),
+                          ...(satellite.carbon_monoxide !== undefined && { co: satellite.carbon_monoxide }),
+                        }} />
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Satellite Weather & Info Cards */}
+                  {showSatellite && satellite && (
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {/* Satellite AQI Card */}
+                      <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
+                        <CardContent className="p-6">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Satellite className="h-5 w-5 text-primary" />
+                              <h3 className="font-medium">Satellite AQI</h3>
+                            </div>
+                            <span className="text-xs text-muted-foreground">Latest</span>
+                          </div>
+                          {satellite.us_aqi === null && satellite.pm2_5 === null && satellite.pm10 === null ? (
+                            <div className="mt-4 text-center text-muted-foreground py-4">
+                              No satellite data available
+                            </div>
+                          ) : (
+                            <>
+                              <div className="mt-4">
+                                <div className="text-sm text-muted-foreground">US AQI</div>
+                                <div className="mt-1 flex items-center gap-2">
+                                  <span 
+                                    className="text-3xl font-bold"
+                                    style={{ color: satellite.us_aqi != null ? getAQICategory(Number(satellite.us_aqi)).color : undefined }}
+                                  >
+                                    {satellite.us_aqi ?? 'N/A'}
+                                  </span>
+                                  {satellite.us_aqi != null && (
+                                    <span 
+                                      className="rounded-full px-2 py-0.5 text-xs text-white"
+                                      style={{ backgroundColor: getAQICategory(Number(satellite.us_aqi)).color }}
+                                    >
+                                      {getAQICategory(Number(satellite.us_aqi)).label}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                  <div className="text-muted-foreground">PM2.5</div>
+                                  <div className="font-medium">{satellite.pm2_5 ?? 'N/A'} µg/m³</div>
+                                </div>
+                                <div>
+                                  <div className="text-muted-foreground">PM10</div>
+                                  <div className="font-medium">{satellite.pm10 ?? 'N/A'} µg/m³</div>
+                                </div>
+                              </div>
+                            </>
+                          )}
+                        </CardContent>
+                      </Card>
+
+                      {/* Weather Card */}
+                      <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
+                        <CardContent className="p-6">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Thermometer className="h-5 w-5 text-orange-500" />
+                              <h3 className="font-medium">Weather</h3>
+                            </div>
+                            <span className="text-xs text-muted-foreground">Current</span>
+                          </div>
+                          <div className="mt-4 space-y-3">
+                            <div>
+                              <div className="text-sm text-muted-foreground">Temperature</div>
+                              <div className="text-2xl font-bold">{satellite.temperature ?? 'N/A'}°C</div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Wind className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-sm">
+                                {satellite.wind_speed ? `${satellite.wind_speed} m/s` : 'N/A'}
+                              </span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Location Card */}
+                      <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
+                        <CardContent className="p-6">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <MapPin className="h-5 w-5 text-primary" />
+                              <h3 className="font-medium">Coordinates</h3>
+                            </div>
+                            <span className="text-xs text-muted-foreground">Location</span>
+                          </div>
+                          <div className="mt-4 space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Latitude</span>
+                              <span className="font-medium">{satellite.lat ?? 'N/A'}°</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Longitude</span>
+                              <span className="font-medium">{satellite.lng ?? 'N/A'}°</span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Stations Section */}
+          {aqiData && (
+            <div className="space-y-4 animate-fade-in-up" style={{ animationDelay: '250ms' }}>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold">Monitoring Stations</h2>
+                  <p className="text-sm text-muted-foreground">Air quality stations in {location}</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant={showStations ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setShowStations(s => !s)}
+                  >
+                    <Radio className="mr-2 h-4 w-4" />
+                    {showStations ? 'Hide Stations' : 'Show Stations'}
+                  </Button>
+                  <Button
+                    variant={showSatellite ? "default" : "outline"}
+                    size="sm"
+                    onClick={handleToggleSatellite}
+                  >
+                    <Satellite className="mr-2 h-4 w-4" />
+                    {showSatellite ? 'Hide Satellite' : 'Show Satellite'}
+                  </Button>
+                </div>
+              </div>
+
+              {showStations && (
+                <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
+                  <CardContent className="p-6">
+                    <StationsList city={location} />
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
         </div>
       </main>
     </div>

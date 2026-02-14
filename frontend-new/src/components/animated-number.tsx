@@ -1,4 +1,6 @@
 "use client"
+/* eslint-disable react-hooks/set-state-in-effect */
+// Animation components require synchronous setState calls inside requestAnimationFrame callbacks
 
 import { useEffect, useState } from "react"
 

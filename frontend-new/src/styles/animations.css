@@ -1,6 +1,11 @@
-/* Modern, subtle animations for AQI website */
+/* ========================================
+   SKYLY ANIMATIONS & MICRO-INTERACTIONS
+   Modern, subtle animations for premium UX
+   ======================================== */
 
-/* Respect user preferences */
+/* ========================================
+   REDUCED MOTION PREFERENCE
+   ======================================== */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -8,10 +13,15 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
-/* Smooth fade-in for page transitions */
+/* ========================================
+   KEYFRAME DEFINITIONS
+   ======================================== */
+
+/* Smooth fade-in with subtle lift */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -23,7 +33,75 @@
   }
 }
 
-/* Staggered card entrance */
+/* Fade in from different directions */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Scale fade for modals and popovers */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes scaleOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+/* Slide animations for panels/drawers */
 @keyframes slideUp {
   from {
     opacity: 0;
@@ -35,19 +113,60 @@
   }
 }
 
-/* Smooth number count-up */
-@keyframes countUp {
+@keyframes slideDown {
   from {
     opacity: 0;
-    transform: scale(0.95);
+    transform: translateY(-100%);
   }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: translateY(0);
   }
 }
 
-/* Chart draw-in */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* Number count-up animation */
+@keyframes countUp {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* AQI value pulse for attention */
+@keyframes aqiPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.02);
+    opacity: 0.9;
+  }
+}
+
+/* Chart draw-in for SVG paths */
 @keyframes chartDraw {
   from {
     stroke-dashoffset: 1000;
@@ -57,7 +176,7 @@
   }
 }
 
-/* Pulse for loading states */
+/* Pulse for loading indicators */
 @keyframes pulse {
   0%, 100% {
     opacity: 1;
@@ -65,6 +184,98 @@
   50% {
     opacity: 0.5;
   }
+}
+
+/* Spinner rotation */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Bounce for icons */
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  50% {
+    transform: translateY(-10%);
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+/* Ping for notifications */
+@keyframes ping {
+  75%, 100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/* Wiggle for attention */
+@keyframes wiggle {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-3deg);
+  }
+  75% {
+    transform: rotate(3deg);
+  }
+}
+
+/* Gradient shift for backgrounds */
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Glow pulse for active elements — subtle depth only, no neon */
+@keyframes subtleDepth {
+  0%, 100% {
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.08);
+  }
+  50% {
+    box-shadow: 0 4px 16px rgb(0 0 0 / 0.12);
+  }
+}
+
+/* Gentle shake for form errors */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+/* Login card scale-in entrance */
+@keyframes cardScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Input focus micro-scale */
+@keyframes inputFocus {
+  from { transform: scale(1); }
+  50% { transform: scale(1.005); }
+  to { transform: scale(1); }
 }
 
 /* Skeleton loader shimmer */
@@ -77,82 +288,275 @@
   }
 }
 
-/* Utility classes */
+/* ========================================
+   ANIMATION UTILITY CLASSES
+   ======================================== */
+
+/* Fade animations */
 .animate-fade-in {
-  animation: fadeIn 0.25s ease-out forwards;
+  animation: fadeIn 0.3s ease-out forwards;
 }
 
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+.animate-fade-in-down {
+  animation: fadeInDown 0.4s ease-out forwards;
+}
+
+.animate-fade-in-left {
+  animation: fadeInLeft 0.4s ease-out forwards;
+}
+
+.animate-fade-in-right {
+  animation: fadeInRight 0.4s ease-out forwards;
+}
+
+/* Scale animations */
+.animate-scale-in {
+  animation: scaleIn 0.2s ease-out forwards;
+}
+
+.animate-scale-out {
+  animation: scaleOut 0.15s ease-in forwards;
+}
+
+/* Slide animations */
 .animate-slide-up {
   animation: slideUp 0.3s ease-out forwards;
 }
 
+.animate-slide-down {
+  animation: slideDown 0.3s ease-out forwards;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.3s ease-out forwards;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.3s ease-out forwards;
+}
+
+/* Special animations */
 .animate-count-up {
-  animation: countUp 0.2s ease-out forwards;
+  animation: countUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
-.stagger-1 {
-  animation-delay: 0.05s;
+.animate-aqi-pulse {
+  animation: aqiPulse 2s ease-in-out infinite;
 }
 
-.stagger-2 {
-  animation-delay: 0.1s;
+.animate-spin {
+  animation: spin 1s linear infinite;
 }
 
-.stagger-3 {
-  animation-delay: 0.15s;
+.animate-bounce {
+  animation: bounce 1s ease-in-out infinite;
 }
 
-.stagger-4 {
-  animation-delay: 0.2s;
+.animate-ping {
+  animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
 
-/* Smooth transitions */
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-wiggle {
+  animation: wiggle 0.3s ease-in-out;
+}
+
+.animate-glow {
+  animation: subtleDepth 2s ease-in-out infinite;
+}
+
+/* Login & form animations */
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
+}
+
+.animate-card-scale-in {
+  animation: cardScaleIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-input-focus {
+  animation: inputFocus 0.2s ease-out;
+}
+
+/* AQI category transition — smooth color change on data update */
+.aqi-category-transition {
+  transition: background-color 500ms ease-out, color 500ms ease-out, border-color 500ms ease-out, box-shadow 500ms ease-out;
+}
+
+/* ========================================
+   STAGGER DELAYS FOR LISTS
+   ======================================== */
+.stagger-1 { animation-delay: 50ms; }
+.stagger-2 { animation-delay: 100ms; }
+.stagger-3 { animation-delay: 150ms; }
+.stagger-4 { animation-delay: 200ms; }
+.stagger-5 { animation-delay: 250ms; }
+.stagger-6 { animation-delay: 300ms; }
+.stagger-7 { animation-delay: 350ms; }
+.stagger-8 { animation-delay: 400ms; }
+
+/* ========================================
+   TRANSITION UTILITIES
+   ======================================== */
+
 .transition-smooth {
-  transition: all 0.2s ease-out;
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-fast {
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-slow {
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-spring {
+  transition: all 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .transition-colors-smooth {
-  transition: color 0.2s ease-out, background-color 0.2s ease-out, border-color 0.2s ease-out;
+  transition: color 200ms ease-out, background-color 200ms ease-out, border-color 200ms ease-out;
 }
 
 .transition-shadow {
-  transition: box-shadow 0.2s ease-out;
+  transition: box-shadow 200ms ease-out;
 }
 
 .transition-transform {
-  transition: transform 0.15s ease-out;
+  transition: transform 150ms ease-out;
 }
 
-/* Hover lift effect */
+.transition-opacity {
+  transition: opacity 200ms ease-out;
+}
+
+/* ========================================
+   HOVER EFFECTS
+   ======================================== */
+
+/* Lift on hover */
 .hover-lift {
-  transition: transform 0.15s ease-out, box-shadow 0.2s ease-out;
+  transition: transform 200ms ease-out, box-shadow 200ms ease-out;
 }
 
 .hover-lift:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px -8px rgb(0 0 0 / 0.15);
 }
 
-/* Active press effect */
+/* Subtle lift */
+.hover-lift-sm {
+  transition: transform 150ms ease-out, box-shadow 150ms ease-out;
+}
+
+.hover-lift-sm:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.1);
+}
+
+/* Glow on hover */
+.hover-glow {
+  transition: box-shadow 200ms ease-out;
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 20px rgb(var(--primary) / 0.3);
+}
+
+/* Scale on hover */
+.hover-scale {
+  transition: transform 150ms ease-out;
+}
+
+.hover-scale:hover {
+  transform: scale(1.03);
+}
+
+.hover-scale-sm {
+  transition: transform 150ms ease-out;
+}
+
+.hover-scale-sm:hover {
+  transform: scale(1.01);
+}
+
+/* Brightness on hover */
+.hover-bright {
+  transition: filter 150ms ease-out;
+}
+
+.hover-bright:hover {
+  filter: brightness(1.05);
+}
+
+/* ========================================
+   ACTIVE/PRESS EFFECTS
+   ======================================== */
+
+.active-scale:active {
+  transform: scale(0.97);
+  transition: transform 100ms ease-out;
+}
+
+.active-scale-sm:active {
+  transform: scale(0.99);
+  transition: transform 100ms ease-out;
+}
+
 .active-press:active {
   transform: scale(0.98);
-  transition: transform 0.1s ease-out;
+  transition: transform 100ms ease-out;
 }
 
-/* Focus ring - accessible */
+/* ========================================
+   FOCUS RING - ACCESSIBLE
+   ======================================== */
+
 .focus-ring:focus-visible {
-  outline: 2px solid hsl(var(--primary));
+  outline: 2px solid rgb(var(--primary));
   outline-offset: 2px;
-  transition: outline-offset 0.15s ease-out;
+  transition: outline-offset 150ms ease-out;
 }
 
-/* Skeleton loader */
+/* ========================================
+   CARD ANIMATIONS
+   ======================================== */
+
+.card-enter {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Card with hover state */
+.card-interactive {
+  transition: transform 200ms ease-out, box-shadow 200ms ease-out, border-color 200ms ease-out;
+}
+
+.card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -4px rgb(0 0 0 / 0.1);
+  border-color: rgb(var(--primary) / 0.3);
+}
+
+/* ========================================
+   SKELETON LOADER
+   ======================================== */
+
 .skeleton {
   background: linear-gradient(
     90deg,
-    hsl(var(--muted) / 0.4) 0%,
-    hsl(var(--muted) / 0.6) 50%,
-    hsl(var(--muted) / 0.4) 100%
+    rgb(var(--muted) / 0.4) 0%,
+    rgb(var(--muted) / 0.6) 50%,
+    rgb(var(--muted) / 0.4) 100%
   );
   background-size: 200% 100%;
   animation: shimmer 2s ease-in-out infinite;
@@ -163,13 +567,40 @@
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* Card entrance with opacity */
-.card-enter {
-  opacity: 0;
-  animation: fadeIn 0.3s ease-out forwards;
+/* ========================================
+   AQI-SPECIFIC ANIMATIONS
+   ======================================== */
+
+/* Color transition for AQI changes */
+.aqi-transition {
+  transition: background-color 500ms ease-out, color 500ms ease-out, border-color 500ms ease-out;
 }
 
-/* Smooth color transitions for AQI categories */
-.aqi-transition {
-  transition: background-color 0.3s ease-out, color 0.3s ease-out;
+/* Number update flash */
+@keyframes numberUpdate {
+  0% {
+    transform: scale(1);
+    color: inherit;
+  }
+  50% {
+    transform: scale(1.1);
+    color: rgb(var(--primary));
+  }
+  100% {
+    transform: scale(1);
+    color: inherit;
+  }
 }
+
+.number-updated {
+  animation: numberUpdate 0.4s ease-out;
+}
+
+/* ========================================
+   THEME SWITCH ANIMATION
+   ======================================== */
+
+.theme-transition {
+  transition: background-color 300ms ease-out, color 300ms ease-out, border-color 300ms ease-out;
+}
+

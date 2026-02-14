@@ -1,0 +1,37 @@
+# Render Blueprint — SkyLy Air Quality Intelligence Platform
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: skyly
+    runtime: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: bash render_start.sh
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        sync: false            # Set manually in Render dashboard
+      - key: WAQI_TOKEN
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: ENABLE_AUTO_INGESTION
+        value: "true"
+      - key: INGESTION_INTERVAL_MINUTES
+        value: "60"
+      - key: ENABLE_AUTO_RETRAINING
+        value: "false"
+      - key: RETRAINING_HOUR
+        value: "3"
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+    disk:
+      name: skyly-data
+      mountPath: /data
+      sizeGB: 1
