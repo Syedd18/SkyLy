@@ -63,8 +63,8 @@ function MessageBubble({ message }: { message: Message }) {
       <div className={cn(
         "max-w-[75%] rounded-lg px-3 py-2",
         isUser 
-          ? "bg-primary text-white" 
-          : "bg-muted"
+          ? "bg-primary text-primary-foreground" 
+          : "bg-muted text-foreground"
       )}>
         <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.text}</p>
       </div>
@@ -209,8 +209,9 @@ export default function Chatbot({ inline = false }: ChatbotProps) {
             placeholder="Type your question..."
             disabled={loading}
             className={cn(
-              "flex-1 px-3 py-2 rounded-lg border border-border bg-background",
-              "text-sm placeholder:text-muted-foreground/50",
+              "flex-1 px-3 py-2 rounded-lg border border-border",
+              "bg-muted/50 text-foreground",
+              "text-sm placeholder:text-muted-foreground/60",
               "focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary",
               "disabled:opacity-50"
             )}
