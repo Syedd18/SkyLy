@@ -11,10 +11,12 @@ Tables:
     Falls back to SQLite only for local development if DATABASE_URL not set.
 """
 import os
+import socket
 import sqlite3
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlparse
 from dotenv import load_dotenv
 
 load_dotenv()  # Load .env file
@@ -29,6 +31,25 @@ except ImportError:
 DATABASE_URL = os.getenv("DATABASE_URL")
 INTEL_DB_PATH = os.getenv("INTEL_DB_PATH", str(Path(__file__).parent.parent / "intelligence.db"))
 
+
+def _resolve_ipv4(db_url: str) -> dict:
+    """Resolve the DB hostname to IPv4 and return connect kwargs.
+    
+    Render doesn't support IPv6 outbound, and Supabase's direct host
+    (db.*.supabase.co) often resolves to IPv6 first.  By resolving to
+    IPv4 ourselves and passing hostaddr, we force an IPv4 connection.
+    """
+    try:
+        parsed = urlparse(db_url)
+        hostname = parsed.hostname
+        if hostname:
+            ipv4 = socket.getaddrinfo(hostname, None, socket.AF_INET)[0][4][0]
+            return {"conninfo": db_url, "hostaddr": ipv4}
+    except (socket.gaierror, IndexError, OSError):
+        pass  # Fall back to default resolution
+    return {"conninfo": db_url}
+
+
 # --------------- Connection helper ---------------
 
 @contextmanager
@@ -39,7 +60,8 @@ def get_intel_conn():
        Development: Falls back to SQLite if DATABASE_URL not set.
     """
     if DATABASE_URL and HAS_PSYCOPG:
-        conn = psycopg.connect(DATABASE_URL)
+        conn_kwargs = _resolve_ipv4(DATABASE_URL)
+        conn = psycopg.connect(**conn_kwargs)
         try:
             yield conn, True
         finally:
