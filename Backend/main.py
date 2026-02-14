@@ -92,6 +92,27 @@ try:
 except ImportError as _ie:
     print(f"⚠ Background scheduler not loaded: {_ie}")
 
+# ---------------- AUTO-TRAIN MODEL ON STARTUP ----------------
+@app.on_event("startup")
+async def auto_train_model():
+    """Train forecasting model on startup if not present."""
+    import threading
+    def _train():
+        try:
+            model_path = Path(__file__).parent / "models" / "forecast_xgb.pkl"
+            if not model_path.exists():
+                print("⚠ No trained model found — training now...")
+                from Backend.intelligence.forecasting import train_forecasting_model
+                import json
+                metrics = train_forecasting_model(use_live_data=True)
+                print(f"✓ Model trained: {json.dumps(metrics, indent=2)}")
+            else:
+                print(f"✓ Model already exists at {model_path}")
+        except Exception as e:
+            print(f"⚠ Auto-train failed (non-fatal): {e}")
+    # Run in thread to not block startup
+    threading.Thread(target=_train, daemon=True).start()
+
 # ---------------- CONSTANTS ----------------
 # Note: In production, use environment variables for tokens
 WAQI_TOKEN = os.getenv("WAQI_TOKEN", "9fe0a55684bf08d8c8131b1cba6233542f86f55d")
