@@ -10,6 +10,7 @@ import {
   Loader2
 } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
+import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || ""
@@ -195,12 +196,12 @@ export default function Chatbot({ inline = false }: ChatbotProps) {
       </div>
 
       {/* Input area */}
-      <div className="p-3 border-t border-border/50">
+      <div className="p-3 border-t border-border/50 bg-background">
         <form 
           onSubmit={(e) => { e.preventDefault(); sendMessage(input) }}
           className="flex items-center gap-2"
         >
-          <input
+          <Input
             ref={inputRef}
             type="text"
             value={input}
@@ -208,13 +209,9 @@ export default function Chatbot({ inline = false }: ChatbotProps) {
             onKeyDown={handleKeyDown}
             placeholder="Type your question..."
             disabled={loading}
-            className={cn(
-              "flex-1 px-3 py-2 rounded-lg border border-border",
-              "bg-muted/50 text-foreground",
-              "text-sm placeholder:text-muted-foreground/60",
-              "focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary",
-              "disabled:opacity-50"
-            )}
+            variant="filled"
+            inputSize="sm"
+            className="flex-1"
           />
           <button 
             type="submit" 
