@@ -208,6 +208,13 @@
   --color-success: rgb(var(--success));
   --color-warning: rgb(var(--warning));
   --color-info: rgb(var(--info));
+  --color-aqi-good: rgb(var(--aqi-good));
+  --color-aqi-moderate: rgb(var(--aqi-moderate));
+  --color-aqi-sensitive: rgb(var(--aqi-unhealthy-sensitive));
+  --color-aqi-unhealthy-sensitive: rgb(var(--aqi-unhealthy-sensitive));
+  --color-aqi-unhealthy: rgb(var(--aqi-unhealthy));
+  --color-aqi-very-unhealthy: rgb(var(--aqi-very-unhealthy));
+  --color-aqi-hazardous: rgb(var(--aqi-hazardous));
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
@@ -584,4 +591,11 @@ a:hover {
   .no-print {
     display: none !important;
   }
+}
+
+/* ========================================
+   MOBILE SAFE AREA
+   ======================================== */
+.safe-bottom {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
 }

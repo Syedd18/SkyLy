@@ -321,23 +321,23 @@ export default function ComparePage() {
               <Scale className="w-4 h-4 text-primary" />
               <span className="text-sm font-medium text-primary">Side-by-Side Analysis</span>
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
               City Comparison
             </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-2">
               Compare air quality metrics between different Indian cities in real-time
             </p>
           </div>
 
           {/* City Selector */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-10 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-            <div className="flex items-center gap-3 p-2 rounded-2xl bg-card/50 backdrop-blur-sm border border-border/50">
-              <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-blue-500/10">
-                <MapPin className="w-4 h-4 text-blue-500" />
-                <span className="text-sm font-medium text-blue-500">City 1</span>
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-stretch sm:items-center mt-8 sm:mt-10 px-2 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+            <div className="flex items-center gap-2 sm:gap-3 p-2 rounded-2xl bg-card/50 backdrop-blur-sm border border-border/50">
+              <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 rounded-lg bg-blue-500/10 shrink-0">
+                <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-500" />
+                <span className="text-xs sm:text-sm font-medium text-blue-500">City 1</span>
               </div>
               <Select value={city1} onValueChange={setCity1}>
-                <SelectTrigger className="w-44 border-0 bg-transparent focus:ring-0">
+                <SelectTrigger className="w-32 sm:w-44 border-0 bg-transparent focus:ring-0">
                   <SelectValue placeholder="Select first city" />
                 </SelectTrigger>
                 <SelectContent>
@@ -356,13 +356,13 @@ export default function ComparePage() {
               <ArrowRight className="w-5 h-5 text-muted-foreground rotate-90 sm:rotate-0" />
             </div>
 
-            <div className="flex items-center gap-3 p-2 rounded-2xl bg-card/50 backdrop-blur-sm border border-border/50">
-              <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-green-500/10">
-                <MapPin className="w-4 h-4 text-green-500" />
-                <span className="text-sm font-medium text-green-500">City 2</span>
+            <div className="flex items-center gap-2 sm:gap-3 p-2 rounded-2xl bg-card/50 backdrop-blur-sm border border-border/50">
+              <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 rounded-lg bg-green-500/10 shrink-0">
+                <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-500" />
+                <span className="text-xs sm:text-sm font-medium text-green-500">City 2</span>
               </div>
               <Select value={city2} onValueChange={setCity2}>
-                <SelectTrigger className="w-44 border-0 bg-transparent focus:ring-0">
+                <SelectTrigger className="w-32 sm:w-44 border-0 bg-transparent focus:ring-0">
                   <SelectValue placeholder="Select second city" />
                 </SelectTrigger>
                 <SelectContent>
@@ -428,12 +428,12 @@ export default function ComparePage() {
                       <div className="space-y-4">
                         <div className="flex items-end gap-3">
                           <span 
-                            className="text-5xl font-bold"
+                            className="text-4xl sm:text-5xl font-bold"
                             style={{ color: category ? `rgb(var(${category.cssVar}))` : undefined }}
                           >
                             {aqi1 ?? 'N/A'}
                           </span>
-                          <span className="text-lg text-muted-foreground mb-1">AQI</span>
+                          <span className="text-base sm:text-lg text-muted-foreground mb-1">AQI</span>
                         </div>
                         {category && (
                           <Badge 
@@ -486,12 +486,12 @@ export default function ComparePage() {
                       <div className="space-y-4">
                         <div className="flex items-end gap-3">
                           <span 
-                            className="text-5xl font-bold"
+                            className="text-4xl sm:text-5xl font-bold"
                             style={{ color: category ? `rgb(var(${category.cssVar}))` : undefined }}
                           >
                             {aqi2 ?? 'N/A'}
                           </span>
-                          <span className="text-lg text-muted-foreground mb-1">AQI</span>
+                          <span className="text-base sm:text-lg text-muted-foreground mb-1">AQI</span>
                         </div>
                         {category && (
                           <Badge 
@@ -518,7 +518,7 @@ export default function ComparePage() {
           {/* Comparison Summary */}
           <Card className="overflow-hidden border-border/40 bg-gradient-to-r from-card/80 to-card/50 backdrop-blur-sm animate-fade-in-up" style={{ animationDelay: '200ms' }}>
             <CardContent className="py-6">
-              <div className="flex items-center justify-center gap-4">
+              <div className="flex items-center justify-center gap-3 sm:gap-4 px-2">
                 {(() => {
                   const a1 = data1?.aqi ?? CITY_DATA[city1 as keyof typeof CITY_DATA]?.current.aqi ?? null
                   const a2 = data2?.aqi ?? CITY_DATA[city2 as keyof typeof CITY_DATA]?.current.aqi ?? null
@@ -526,12 +526,12 @@ export default function ComparePage() {
                     const diff = getDifference(a1, a2)
                     if (a1 > a2) {
                       return (
-                        <div className="flex items-center gap-4 text-center">
-                          <div className="p-3 rounded-xl bg-red-500/10">
-                            <TrendingUp className="h-6 w-6 text-red-500" />
+                        <div className="flex items-center gap-3 sm:gap-4 text-center">
+                          <div className="p-2 sm:p-3 rounded-xl bg-red-500/10 shrink-0">
+                            <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-red-500" />
                           </div>
                           <div>
-                            <p className="text-lg font-semibold">
+                            <p className="text-sm sm:text-base md:text-lg font-semibold">
                               <span className="text-blue-500">{city1}</span> has{' '}
                               <span className="text-red-500">{diff.percent.toFixed(1)}% higher</span> AQI than{' '}
                               <span className="text-green-500">{city2}</span>
@@ -545,12 +545,12 @@ export default function ComparePage() {
                     }
                     if (a2 > a1) {
                       return (
-                        <div className="flex items-center gap-4 text-center">
-                          <div className="p-3 rounded-xl bg-green-500/10">
-                            <TrendingDown className="h-6 w-6 text-green-500" />
+                        <div className="flex items-center gap-3 sm:gap-4 text-center">
+                          <div className="p-2 sm:p-3 rounded-xl bg-green-500/10 shrink-0">
+                            <TrendingDown className="h-5 w-5 sm:h-6 sm:w-6 text-green-500" />
                           </div>
                           <div>
-                            <p className="text-lg font-semibold">
+                            <p className="text-sm sm:text-base md:text-lg font-semibold">
                               <span className="text-blue-500">{city1}</span> has{' '}
                               <span className="text-green-500">{getDifference(a2, a1).percent.toFixed(1)}% lower</span> AQI than{' '}
                               <span className="text-green-500">{city2}</span>
@@ -595,10 +595,11 @@ export default function ComparePage() {
               </CardHeader>
               <CardContent className="pt-4">
                 {loading ? (
-                  <Skeleton className="h-64 w-full" />
+                  <Skeleton className="h-48 sm:h-64 w-full" />
                 ) : (
-                  <ResponsiveContainer width="100%" height={280}>
-                    <BarChart data={pollutantComparison} barGap={8}>
+                  <div className="h-[220px] sm:h-[260px] md:h-[280px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={pollutantComparison} barGap={8} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
                       <defs>
                         <linearGradient id="blueGradient" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor="#3b82f6" stopOpacity={1} />
@@ -610,14 +611,15 @@ export default function ComparePage() {
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
-                      <XAxis dataKey="pollutant" tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
-                      <YAxis tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
+                      <XAxis dataKey="pollutant" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                      <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} width={35} />
                       <Tooltip content={<CustomTooltip />} />
-                      <Legend />
+                      <Legend wrapperStyle={{ fontSize: '12px' }} />
                       <Bar dataKey={city1} fill="url(#blueGradient)" name={city1} radius={[6, 6, 0, 0]} />
                       <Bar dataKey={city2} fill="url(#greenGradient)" name={city2} radius={[6, 6, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -703,10 +705,11 @@ export default function ComparePage() {
             </CardHeader>
             <CardContent className="pt-4">
               {loading ? (
-                <Skeleton className="h-80 w-full" />
+                <Skeleton className="h-56 sm:h-72 md:h-80 w-full" />
               ) : (
-                <ResponsiveContainer width="100%" height={350}>
-                  <LineChart data={comparisonData}>
+                <div className="h-[250px] sm:h-[300px] md:h-[350px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={comparisonData} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
                     <defs>
                       <linearGradient id="lineBlue" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
@@ -720,15 +723,16 @@ export default function ComparePage() {
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
                     <XAxis 
                       dataKey="date" 
-                      tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                      tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }}
                       tickFormatter={(value) => {
                         const date = new Date(value)
                         return isNaN(+date) ? value : date.toLocaleDateString(undefined, { month: 'short', year: '2-digit' })
                       }}
+                      interval="preserveStartEnd"
                     />
-                    <YAxis tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
+                    <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} width={35} />
                     <Tooltip content={<CustomTooltip />} />
-                    <Legend />
+                    <Legend wrapperStyle={{ fontSize: '12px' }} />
                     <Line
                       type="monotone"
                       dataKey={city1}
@@ -749,6 +753,7 @@ export default function ComparePage() {
                     />
                   </LineChart>
                 </ResponsiveContainer>
+                </div>
               )}
             </CardContent>
           </Card>

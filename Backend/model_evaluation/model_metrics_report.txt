@@ -1,0 +1,43 @@
+
+======================================================================
+                    MODEL EVALUATION REPORT
+======================================================================
+
+MODEL INFORMATION:
+  Model Type:        XGBoost Regressor
+  Version:           xgb-v2
+  Training Date:     2026-02-14T05:21:58.742074+00:00
+  Data Source:       csv+database
+  
+DATASET STATISTICS:
+  Training Size:     185,368 samples
+  Test Size:         46,404 samples
+  Total Cities:      291
+  Features:          17
+  
+REGRESSION METRICS:
+  R² Score:          0.8287  ✓ Excellent
+  MAE:               17.74 AQI units
+  RMSE:              27.59 AQI units
+  MAPE:              18.98%
+  Median Abs Error:  10.58 AQI units
+  90th Percentile:   43.62 AQI units
+  
+PREDICTION ACCURACY:
+  Within ±10 AQI:    48.2%
+  Within ±20 AQI:    70.7%
+  Within ±30 AQI:    82.0%
+  
+WORST PERFORMING CITIES (from training):
+  Sri Ganganagar            MAE: 37.28
+  Rohtak                    MAE: 31.27
+  Saharsa                   MAE: 30.91
+  Siwan                     MAE: 30.24
+  Samastipur                MAE: 29.68
+  Sonipat                   MAE: 28.16
+  Singrauli                 MAE: 26.82
+  Talcher                   MAE: 24.83
+  Yamunanagar               MAE: 24.81
+  Rupnagar                  MAE: 24.24
+
+======================================================================

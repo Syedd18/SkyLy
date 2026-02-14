@@ -28,12 +28,12 @@ interface RawCityData {
 }
 
 function getAQICategory(aqi: number) {
-  if (aqi <= 50) return { label: "Good", badge: "bg-aqi-good text-white", text: "text-aqi-good", ring: "ring-aqi-good/20" }
-  if (aqi <= 100) return { label: "Moderate", badge: "bg-aqi-moderate text-white", text: "text-aqi-moderate", ring: "ring-aqi-moderate/20" }
-  if (aqi <= 150) return { label: "Sensitive", badge: "bg-aqi-sensitive text-white", text: "text-aqi-sensitive", ring: "ring-aqi-sensitive/20" }
-  if (aqi <= 200) return { label: "Unhealthy", badge: "bg-aqi-unhealthy text-white", text: "text-aqi-unhealthy", ring: "ring-aqi-unhealthy/20" }
-  if (aqi <= 300) return { label: "Very Unhealthy", badge: "bg-aqi-very-unhealthy text-white", text: "text-aqi-very-unhealthy", ring: "ring-aqi-very-unhealthy/20" }
-  return { label: "Hazardous", badge: "bg-aqi-hazardous text-white", text: "text-aqi-hazardous", ring: "ring-aqi-hazardous/20" }
+  if (aqi <= 50) return { label: "Good", color: "rgb(var(--aqi-good))" }
+  if (aqi <= 100) return { label: "Moderate", color: "rgb(var(--aqi-moderate))" }
+  if (aqi <= 150) return { label: "Unhealthy for Sensitive", color: "rgb(var(--aqi-unhealthy-sensitive))" }
+  if (aqi <= 200) return { label: "Unhealthy", color: "rgb(var(--aqi-unhealthy))" }
+  if (aqi <= 300) return { label: "Very Unhealthy", color: "rgb(var(--aqi-very-unhealthy))" }
+  return { label: "Hazardous", color: "rgb(var(--aqi-hazardous))" }
 }
 
 function getRankIcon(index: number) {
@@ -172,14 +172,15 @@ export default function RankingPage() {
                     <span className="text-sm font-medium">Filters</span>
                   </div>
                   
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto">
                     {/* Sort Options */}
-                    <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-1">
+                    <div className="flex flex-wrap items-center gap-1 rounded-lg bg-muted/50 p-1">
+                      <span className="text-xs text-muted-foreground px-1.5 sm:hidden">Sort:</span>
                       <Button
                         variant={sortBy === 'rank' ? 'default' : 'ghost'}
                         size="sm"
                         onClick={() => setSortBy('rank')}
-                        className="h-8 text-xs lg:text-sm"
+                        className="h-7 sm:h-8 text-xs lg:text-sm px-2 sm:px-3"
                       >
                         <ArrowUpDown className="h-3 w-3 mr-1" />
                         Rank
@@ -188,29 +189,30 @@ export default function RankingPage() {
                         variant={sortBy === 'high' ? 'default' : 'ghost'}
                         size="sm"
                         onClick={() => setSortBy('high')}
-                        className="h-8 text-xs lg:text-sm"
+                        className="h-7 sm:h-8 text-xs lg:text-sm px-2 sm:px-3"
                       >
                         <TrendingUp className="h-3 w-3 mr-1" />
-                        High → Low
+                        High→Low
                       </Button>
                       <Button
                         variant={sortBy === 'low' ? 'default' : 'ghost'}
                         size="sm"
                         onClick={() => setSortBy('low')}
-                        className="h-8 text-xs lg:text-sm"
+                        className="h-7 sm:h-8 text-xs lg:text-sm px-2 sm:px-3"
                       >
                         <TrendingDown className="h-3 w-3 mr-1" />
-                        Low → High
+                        Low→High
                       </Button>
                     </div>
 
                     {/* Filter Options */}
-                    <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-1">
+                    <div className="flex flex-wrap items-center gap-1 rounded-lg bg-muted/50 p-1">
+                      <span className="text-xs text-muted-foreground px-1.5 sm:hidden">Filter:</span>
                       <Button
                         variant={filter === "all" ? "default" : "ghost"}
                         onClick={() => setFilter("all")}
                         size="sm"
-                        className="h-8 text-xs lg:text-sm"
+                        className="h-7 sm:h-8 text-xs lg:text-sm px-2 sm:px-3"
                       >
                         All
                       </Button>
@@ -218,27 +220,27 @@ export default function RankingPage() {
                         variant={filter === "good" ? "default" : "ghost"}
                         onClick={() => setFilter("good")}
                         size="sm"
-                        className="h-8 text-xs lg:text-sm"
+                        className="h-7 sm:h-8 text-xs lg:text-sm px-2 sm:px-3"
                       >
-                        <span className="h-2 w-2 rounded-full bg-aqi-good mr-1.5" />
+                        <span className="h-2 w-2 rounded-full bg-aqi-good mr-1" />
                         Good
                       </Button>
                       <Button
                         variant={filter === "moderate" ? "default" : "ghost"}
                         onClick={() => setFilter("moderate")}
                         size="sm"
-                        className="h-8 text-xs lg:text-sm"
+                        className="h-7 sm:h-8 text-xs lg:text-sm px-2 sm:px-3"
                       >
-                        <span className="h-2 w-2 rounded-full bg-aqi-moderate mr-1.5" />
+                        <span className="h-2 w-2 rounded-full bg-aqi-moderate mr-1" />
                         Moderate
                       </Button>
                       <Button
                         variant={filter === "unhealthy" ? "default" : "ghost"}
                         onClick={() => setFilter("unhealthy")}
                         size="sm"
-                        className="h-8 text-xs lg:text-sm"
+                        className="h-7 sm:h-8 text-xs lg:text-sm px-2 sm:px-3"
                       >
-                        <span className="h-2 w-2 rounded-full bg-aqi-unhealthy mr-1.5" />
+                        <span className="h-2 w-2 rounded-full bg-aqi-unhealthy mr-1" />
                         Unhealthy
                       </Button>
                     </div>
@@ -253,11 +255,11 @@ export default function RankingPage() {
             <Card className="border-border/40 bg-card/50 backdrop-blur-sm hover:bg-card/80 transition-all duration-300">
               <CardContent className="p-4 lg:p-6 text-center">
                 <div className="flex items-center justify-center mb-2">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-aqi-good/10">
-                    <Star className="h-5 w-5 text-aqi-good" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ backgroundColor: 'rgb(var(--aqi-good) / 0.1)' }}>
+                    <Star className="h-5 w-5" style={{ color: 'rgb(var(--aqi-good))' }} />
                   </div>
                 </div>
-                <div className="text-2xl lg:text-3xl font-bold text-aqi-good mb-1">
+                <div className="text-2xl lg:text-3xl font-bold mb-1" style={{ color: 'rgb(var(--aqi-good))' }}>
                   {citiesData.filter(city => { const e = (typeof city.maxAqi === 'number') ? city.maxAqi : city.aqi; return typeof e === 'number' && e <= 50 }).length}
                 </div>
                 <p className="text-xs lg:text-sm text-muted-foreground">Cities with Good AQI</p>
@@ -266,11 +268,11 @@ export default function RankingPage() {
             <Card className="border-border/40 bg-card/50 backdrop-blur-sm hover:bg-card/80 transition-all duration-300">
               <CardContent className="p-4 lg:p-6 text-center">
                 <div className="flex items-center justify-center mb-2">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-aqi-moderate/10">
-                    <TrendingUp className="h-5 w-5 text-aqi-moderate" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ backgroundColor: 'rgb(var(--aqi-moderate) / 0.1)' }}>
+                    <TrendingUp className="h-5 w-5" style={{ color: 'rgb(var(--aqi-moderate))' }} />
                   </div>
                 </div>
-                <div className="text-2xl lg:text-3xl font-bold text-aqi-moderate mb-1">
+                <div className="text-2xl lg:text-3xl font-bold mb-1" style={{ color: 'rgb(var(--aqi-moderate))' }}>
                   {citiesData.filter(city => { const e = (typeof city.maxAqi === 'number') ? city.maxAqi : city.aqi; return typeof e === 'number' && e > 50 && e <= 100 }).length}
                 </div>
                 <p className="text-xs lg:text-sm text-muted-foreground">Cities with Moderate AQI</p>
@@ -279,11 +281,11 @@ export default function RankingPage() {
             <Card className="border-border/40 bg-card/50 backdrop-blur-sm hover:bg-card/80 transition-all duration-300">
               <CardContent className="p-4 lg:p-6 text-center">
                 <div className="flex items-center justify-center mb-2">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-aqi-unhealthy/10">
-                    <TrendingDown className="h-5 w-5 text-aqi-unhealthy" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ backgroundColor: 'rgb(var(--aqi-unhealthy) / 0.1)' }}>
+                    <TrendingDown className="h-5 w-5" style={{ color: 'rgb(var(--aqi-unhealthy))' }} />
                   </div>
                 </div>
-                <div className="text-2xl lg:text-3xl font-bold text-aqi-unhealthy mb-1">
+                <div className="text-2xl lg:text-3xl font-bold mb-1" style={{ color: 'rgb(var(--aqi-unhealthy))' }}>
                   {citiesData.filter(city => { const e = (typeof city.maxAqi === 'number') ? city.maxAqi : city.aqi; return typeof e === 'number' && e > 100 }).length}
                 </div>
                 <p className="text-xs lg:text-sm text-muted-foreground">Cities with Poor AQI</p>
@@ -347,9 +349,10 @@ export default function RankingPage() {
                         key={city.name}
                         className={`group flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 lg:p-4 rounded-xl border transition-all duration-300 gap-3 ${
                           isTopThree 
-                            ? `bg-gradient-to-r from-yellow-500/5 to-orange-500/5 border-yellow-500/20 hover:border-yellow-500/40 ${category.ring} ring-2` 
+                            ? "bg-gradient-to-r from-yellow-500/5 to-orange-500/5 border-yellow-500/20 hover:border-yellow-500/40 ring-2" 
                             : "border-border/40 hover:bg-muted/50 hover:border-border"
                         }`}
+                        style={isTopThree ? { '--tw-ring-color': `${category.color}33` } as React.CSSProperties : undefined}
                       >
                         <div className="flex items-center gap-3 lg:gap-4 flex-1 min-w-0">
                           <div className={`flex items-center justify-center w-9 h-9 lg:w-10 lg:h-10 rounded-full shrink-0 text-sm lg:text-base font-semibold ${
@@ -373,10 +376,16 @@ export default function RankingPage() {
                         </div>
 
                         <div className="flex items-center gap-2 self-end sm:self-auto">
-                          <Badge className={`${category.badge} text-xs px-2 lg:px-3 py-0.5`}>
+                          <Badge 
+                            className="text-white text-xs px-2 lg:px-3 py-0.5"
+                            style={{ backgroundColor: category.color }}
+                          >
                             {category.label}
                           </Badge>
-                          <span className={`text-lg lg:text-xl font-bold ${category.text}`}>
+                          <span 
+                            className="text-lg lg:text-xl font-bold"
+                            style={{ color: category.color }}
+                          >
                             {effective ?? 'N/A'}
                           </span>
                         </div>

@@ -190,19 +190,19 @@ export default function AnalyticsPage() {
               <Sparkles className="w-4 h-4 text-primary" />
               <span className="text-sm font-medium text-primary">Data-Driven Insights</span>
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
               Air Quality Analytics
             </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-2">
               Comprehensive analysis of air quality trends, patterns, and seasonal variations
             </p>
           </div>
 
           {/* City Selector */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-10 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-            <div className="flex items-center gap-3 p-1 rounded-xl bg-card/50 backdrop-blur-sm border border-border/50">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-8 sm:mt-10 px-2 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 p-2 sm:p-1 rounded-xl bg-card/50 backdrop-blur-sm border border-border/50 w-full sm:w-auto">
               <Select value={selectedCity} onValueChange={setSelectedCity}>
-                <SelectTrigger className="w-56 border-0 bg-transparent focus:ring-0">
+                <SelectTrigger className="w-full sm:w-56 border-0 bg-transparent focus:ring-0">
                   <SelectValue placeholder="Select city" />
                 </SelectTrigger>
                 <SelectContent>
@@ -338,15 +338,16 @@ export default function AnalyticsPage() {
               <CardContent className="pt-4">
                 {loadingData ? (
                   <div className="space-y-4">
-                    <Skeleton className="h-64 w-full" />
+                    <Skeleton className="h-48 sm:h-64 w-full" />
                   </div>
                 ) : (
-                  <ResponsiveContainer width="100%" height={300}>
+                  <div className="h-[220px] sm:h-[280px] md:h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
                     {series.length ? (
                       (() => {
                         const seasonal = computeSeasonalData(series)
                         return seasonal.length ? (
-                          <BarChart data={seasonal}>
+                          <BarChart data={seasonal} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
                             <defs>
                               <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="0%" stopColor="#3b82f6" stopOpacity={1} />
@@ -354,8 +355,8 @@ export default function AnalyticsPage() {
                               </linearGradient>
                             </defs>
                             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
-                            <XAxis dataKey="season" tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} axisLine={{ stroke: 'hsl(var(--border))' }} />
-                            <YAxis tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} axisLine={{ stroke: 'hsl(var(--border))' }} />
+                            <XAxis dataKey="season" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={{ stroke: 'hsl(var(--border))' }} />
+                            <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={{ stroke: 'hsl(var(--border))' }} width={35} />
                             <Tooltip content={<CustomTooltip />} />
                             <Bar dataKey="aqi" fill="url(#barGradient)" radius={[6, 6, 0, 0]} />
                           </BarChart>
@@ -367,6 +368,7 @@ export default function AnalyticsPage() {
                       <div className="h-full flex items-center justify-center text-muted-foreground">Select a city to view data</div>
                     )}
                   </ResponsiveContainer>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -386,21 +388,23 @@ export default function AnalyticsPage() {
               </CardHeader>
               <CardContent className="pt-4">
                 {loadingData ? (
-                  <Skeleton className="h-64 w-full" />
+                  <Skeleton className="h-48 sm:h-64 w-full" />
                 ) : (
-                  <ResponsiveContainer width="100%" height={300}>
+                  <div className="h-[220px] sm:h-[280px] md:h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
                     {series.length ? (
-                      <LineChart data={computeYearlyComparison(series)}>
+                      <LineChart data={computeYearlyComparison(series)} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
-                        <XAxis dataKey="year" tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} axisLine={{ stroke: 'hsl(var(--border))' }} />
-                        <YAxis tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} axisLine={{ stroke: 'hsl(var(--border))' }} />
+                        <XAxis dataKey="year" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={{ stroke: 'hsl(var(--border))' }} />
+                        <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={{ stroke: 'hsl(var(--border))' }} width={35} />
                         <Tooltip content={<CustomTooltip />} />
-                        <Line type="monotone" dataKey="aqi" stroke="#ED1B24" strokeWidth={3} dot={{ fill: "#ED1B24", strokeWidth: 2, r: 5 }} activeDot={{ r: 8, strokeWidth: 2, stroke: '#fff' }} />
+                        <Line type="monotone" dataKey="aqi" stroke="#ED1B24" strokeWidth={2.5} dot={{ fill: "#ED1B24", strokeWidth: 2, r: 4 }} activeDot={{ r: 6, strokeWidth: 2, stroke: '#fff' }} />
                       </LineChart>
                     ) : (
                       <div className="h-full flex items-center justify-center text-muted-foreground">Select a city to view data</div>
                     )}
                   </ResponsiveContainer>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -421,11 +425,12 @@ export default function AnalyticsPage() {
             </CardHeader>
             <CardContent className="pt-4">
               {loadingData ? (
-                <Skeleton className="h-80 w-full" />
+                <Skeleton className="h-56 sm:h-72 md:h-80 w-full" />
               ) : (
-                <ResponsiveContainer width="100%" height={350}>
+                <div className="h-[250px] sm:h-[300px] md:h-[350px]">
+                <ResponsiveContainer width="100%" height="100%">
                   {series.length ? (
-                    <AreaChart data={series}>
+                    <AreaChart data={series} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
                       <defs>
                         <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
@@ -439,10 +444,11 @@ export default function AnalyticsPage() {
                           const date = new Date(value)
                           return isNaN(+date) ? value : date.toLocaleDateString(undefined, { month: 'short', year: '2-digit' })
                         }}
-                        tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                        tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }}
                         axisLine={{ stroke: 'hsl(var(--border))' }}
+                        interval="preserveStartEnd"
                       />
-                      <YAxis tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} axisLine={{ stroke: 'hsl(var(--border))' }} />
+                      <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={{ stroke: 'hsl(var(--border))' }} width={35} />
                       <Tooltip 
                         content={<CustomTooltip />}
                         labelFormatter={(value) => {
@@ -456,6 +462,7 @@ export default function AnalyticsPage() {
                     <div className="h-full flex items-center justify-center text-muted-foreground">Select a city to view historical data</div>
                   )}
                 </ResponsiveContainer>
+                </div>
               )}
             </CardContent>
           </Card>

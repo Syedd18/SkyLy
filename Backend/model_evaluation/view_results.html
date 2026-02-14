@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Evaluation Results - SkyLy Intelligence</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+        }
+        
+        .metric-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .metric-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        
+        .metric-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .metric-value.excellent {
+            color: #10b981;
+        }
+        
+        .graphs-section {
+            margin-top: 30px;
+        }
+        
+        .graph-container {
+            margin-bottom: 40px;
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .graph-title {
+            font-size: 1.4em;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .graph-description {
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+        
+        .graph-container img {
+            width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        
+        .graph-container img:hover {
+            transform: scale(1.02);
+        }
+        
+        .report-section {
+            margin: 40px 0;
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 30px;
+            border-radius: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.6;
+            overflow-x: auto;
+        }
+        
+        .report-section pre {
+            margin: 0;
+            white-space: pre-wrap;
+        }
+        
+        .data-info {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 8px;
+        }
+        
+        .data-info h3 {
+            color: #b45309;
+            margin-bottom: 10px;
+        }
+        
+        .data-info ul {
+            list-style: none;
+            padding-left: 20px;
+        }
+        
+        .data-info li {
+            color: #78350f;
+            margin: 8px 0;
+            position: relative;
+        }
+        
+        .data-info li:before {
+            content: "✓";
+            position: absolute;
+            left: -20px;
+            color: #10b981;
+            font-weight: bold;
+        }
+        
+        .lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .lightbox img {
+            max-width: 95%;
+            max-height: 95%;
+            border-radius: 10px;
+        }
+        
+        .timestamp {
+            text-align: center;
+            color: #999;
+            font-size: 0.9em;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌤️ SkyLy Model Evaluation Results</h1>
+        <p class="subtitle">XGBoost AQI Forecasting Model - Comprehensive Performance Analysis</p>
+        
+        <div class="data-info">
+            <h3>📊 Data Source Information</h3>
+            <ul>
+                <li>CSV Historical Records: <strong>235,785</strong> samples</li>
+                <li>Live Supabase Records: <strong>332</strong> samples (with weather data)</li>
+                <li>Merged Dataset: <strong>236,117</strong> total records</li>
+                <li>Cities Covered: <strong>291</strong> Indian cities</li>
+                <li>Test Set Size: <strong>46,404</strong> samples (20%)</li>
+            </ul>
+        </div>
+        
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-label">R² Score</div>
+                <div class="metric-value excellent">0.8287</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">MAE (AQI units)</div>
+                <div class="metric-value">17.74</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">RMSE (AQI units)</div>
+                <div class="metric-value">27.59</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">MAPE</div>
+                <div class="metric-value">18.98%</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Within ±10 AQI</div>
+                <div class="metric-value excellent">48.2%</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Within ±20 AQI</div>
+                <div class="metric-value excellent">70.7%</div>
+            </div>
+        </div>
+        
+        <div class="graphs-section">
+            <div class="graph-container">
+                <h2 class="graph-title">1. Actual vs Predicted AQI</h2>
+                <p class="graph-description">
+                    Scatter plot showing how well the model's predictions align with actual AQI values. 
+                    Points closer to the red diagonal line indicate better predictions. The tight clustering 
+                    around the line demonstrates strong model performance across all AQI ranges.
+                </p>
+                <img src="1_actual_vs_predicted.png" alt="Actual vs Predicted" onclick="openLightbox(this)">
+            </div>
+            
+            <div class="graph-container">
+                <h2 class="graph-title">2. Residual Analysis</h2>
+                <p class="graph-description">
+                    Left: Residual scatter plot shows prediction errors are randomly distributed around zero, 
+                    indicating no systematic bias. Right: Histogram shows residuals follow a normal distribution 
+                    centered at zero, confirming model reliability.
+                </p>
+                <img src="2_residuals.png" alt="Residuals" onclick="openLightbox(this)">
+            </div>
+            
+            <div class="graph-container">
+                <h2 class="graph-title">3. Feature Importance</h2>
+                <p class="graph-description">
+                    Bar chart ranking the top 15 features by their impact on predictions. Lag values (lag_1, lag_7) 
+                    and rolling averages are most influential, followed by weather features (temperature, humidity, 
+                    wind speed) from the live Supabase data.
+                </p>
+                <img src="3_feature_importance.png" alt="Feature Importance" onclick="openLightbox(this)">
+            </div>
+            
+            <div class="graph-container">
+                <h2 class="graph-title">4. Error Distribution</h2>
+                <p class="graph-description">
+                    Left: Absolute error histogram shows most predictions have errors under 30 AQI units. 
+                    Right: Percentage error distribution indicates the model maintains consistent accuracy 
+                    across different AQI magnitudes.
+                </p>
+                <img src="4_error_distribution.png" alt="Error Distribution" onclick="openLightbox(this)">
+            </div>
+            
+            <div class="graph-container">
+                <h2 class="graph-title">5. Error by AQI Category</h2>
+                <p class="graph-description">
+                    Box plot showing prediction accuracy across different AQI health categories. Model performs 
+                    consistently well across "Good", "Moderate", and "Unhealthy" ranges. Higher variability in 
+                    extreme categories is expected due to fewer samples.
+                </p>
+                <img src="5_error_by_category.png" alt="Error by Category" onclick="openLightbox(this)">
+            </div>
+            
+            <div class="graph-container">
+                <h2 class="graph-title">6. Time Series Example - Varanasi</h2>
+                <p class="graph-description">
+                    Sample time series comparison showing actual (blue) vs predicted (orange) AQI for Varanasi 
+                    over 100 days. The close tracking demonstrates the model's ability to capture temporal 
+                    patterns and trends in air quality.
+                </p>
+                <img src="6_time_series_sample.png" alt="Time Series Sample" onclick="openLightbox(this)">
+            </div>
+        </div>
+        
+        <div class="report-section">
+            <h2 style="color: #60a5fa; margin-bottom: 20px;">📋 Full Metrics Report</h2>
+            <pre id="reportContent">Loading report...</pre>
+        </div>
+        
+        <div class="timestamp">
+            Generated on: February 14, 2026 | Data: CSV (235,785) + Supabase (332 live records)
+        </div>
+    </div>
+    
+    <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+        <img id="lightboxImg" src="" alt="Enlarged view">
+    </div>
+    
+    <script>
+        // Load report content
+        fetch('model_metrics_report.txt')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('reportContent').textContent = data;
+            })
+            .catch(err => {
+                document.getElementById('reportContent').textContent = 'Error loading report: ' + err;
+            });
+        
+        function openLightbox(img) {
+            const lightbox = document.getElementById('lightbox');
+            const lightboxImg = document.getElementById('lightboxImg');
+            lightboxImg.src = img.src;
+            lightbox.style.display = 'flex';
+        }
+        
+        function closeLightbox() {
+            document.getElementById('lightbox').style.display = 'none';
+        }
+        
+        // Close lightbox on ESC key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeLightbox();
+        });
+    </script>
+</body>
+</html>

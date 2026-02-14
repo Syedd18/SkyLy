@@ -216,8 +216,8 @@ function ForecastTab() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-                  <XAxis dataKey="date" className="text-xs" tick={{ fontSize: 12 }} />
-                  <YAxis domain={[0, Math.ceil(maxAqi * 1.1)]} tick={{ fontSize: 12 }} />
+                  <XAxis dataKey="date" className="text-xs" tick={{ fontSize: 10 }} />
+                  <YAxis domain={[0, Math.ceil(maxAqi * 1.1)]} tick={{ fontSize: 10 }} width={35} />
                   <Tooltip
                     content={({ active, payload, label }) => {
                       if (!active || !payload?.length) return null

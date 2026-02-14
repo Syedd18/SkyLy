@@ -24,7 +24,10 @@ import {
   Wind,
   BarChart3,
   Clock,
-  ExternalLink
+  ExternalLink,
+  User,
+  Mail,
+  LogOut
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -296,7 +299,7 @@ function FavoriteCard({
 }
 
 export default function Dashboard() {
-  const { isAuthenticated, token, user } = useAuth()
+  const { isAuthenticated, token, user, logout } = useAuth()
   const [favorites, setFavorites] = useState<Favorite[]>([])
   const [stats, setStats] = useState({
     totalCities: 0,
@@ -638,6 +641,72 @@ export default function Dashboard() {
               </Button>
             </div>
           </header>
+
+          {/* Profile Card - Mobile Friendly */}
+          <section className="lg:hidden animate-fade-in-up">
+            <Card className="overflow-hidden border-primary/20">
+              <CardContent className="p-0">
+                {/* Profile Header with Gradient */}
+                <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 pb-4">
+                  <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0">
+                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-white text-xl font-bold shadow-lg ring-4 ring-background">
+                        {user?.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : <User className="w-8 h-8" />}
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-semibold truncate">{user?.name}</h3>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5 truncate">
+                        <Mail className="w-3 h-3 flex-shrink-0" />
+                        <span className="truncate">{user?.email}</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Stats */}
+                <div className="grid grid-cols-2 gap-4 p-4 border-t border-border/50">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 rounded-lg bg-aqi-good/10">
+                      <Star className="w-4 h-4 text-aqi-good" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Favorites</p>
+                      <p className="text-lg font-semibold">{favorites.length}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      <MapPin className="w-4 h-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Tracked</p>
+                      <p className="text-lg font-semibold">{stats.totalCities}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="p-4 pt-0 flex items-center gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={logout}
+                    className="flex-1 gap-2"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    Sign Out
+                  </Button>
+                  <Link href="/about" className="flex-1">
+                    <Button variant="ghost" size="sm" className="w-full gap-2">
+                      <User className="w-3.5 h-3.5" />
+                      About
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
 
           {/* Stats Cards */}
           <section className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
