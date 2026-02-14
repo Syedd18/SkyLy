@@ -114,15 +114,25 @@ export function ProfileModal({ trigger }: ProfileDropdownProps) {
         {trigger}
       </button>
 
+      {/* Mobile backdrop overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-black/20 sm:hidden"
+          onClick={() => { setIsOpen(false); setShowFavorites(false); setShowPreferences(false) }}
+        />
+      )}
+
       {isOpen && (
         <div className={cn(
-          "absolute mt-2 z-50",
-          "left-2 right-2 sm:left-auto sm:right-0",
-          "w-auto sm:w-72",
-          "max-w-[calc(100vw-1rem)]",
-          "bg-background border border-border rounded-lg shadow-lg",
+          "z-50",
+          // Mobile: fixed positioning relative to viewport
+          "fixed top-14 left-3 right-3",
+          // Desktop: absolute dropdown from button
+          "sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:mt-2",
+          "sm:w-72",
+          "bg-background border border-border rounded-xl shadow-xl",
           "overflow-hidden animate-fade-in-up",
-          "max-h-[calc(100vh-100px)] flex flex-col"
+          "max-h-[calc(100vh-4rem)] sm:max-h-[calc(100vh-100px)] flex flex-col"
         )}>
           {showPreferences ? (
             /* Preferences view */
