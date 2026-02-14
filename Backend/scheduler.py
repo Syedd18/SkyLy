@@ -25,8 +25,8 @@ logger = logging.getLogger("skyly.scheduler")
 # Configuration from environment
 ENABLE_AUTO_INGESTION = os.getenv("ENABLE_AUTO_INGESTION", "true").lower() == "true"
 INGESTION_INTERVAL_MINUTES = int(os.getenv("INGESTION_INTERVAL_MINUTES", "60"))
-ENABLE_AUTO_RETRAINING = os.getenv("ENABLE_AUTO_RETRAINING", "false").lower() == "true"
-RETRAINING_HOUR = int(os.getenv("RETRAINING_HOUR", "3"))  # 3 AM daily
+ENABLE_AUTO_RETRAINING = os.getenv("ENABLE_AUTO_RETRAINING", "true").lower() == "true"
+RETRAINING_INTERVAL_HOURS = int(os.getenv("RETRAINING_INTERVAL_HOURS", "6"))
 
 scheduler = BackgroundScheduler()
 
@@ -78,18 +78,16 @@ def start_scheduler():
             logger.info(msg)
             print(msg)
         
-        # Job 2: Daily model retraining (optional)
+        # Job 2: Periodic model retraining (every N hours)
         if ENABLE_AUTO_RETRAINING:
             scheduler.add_job(
                 run_retraining_job,
-                trigger="cron",
-                hour=RETRAINING_HOUR,
-                minute=0,
+                trigger=IntervalTrigger(hours=RETRAINING_INTERVAL_HOURS),
                 id="retraining_job",
-                name="Daily Model Retraining",
+                name="Model Retraining",
                 replace_existing=True,
             )
-            msg = f"✓ Scheduled retraining job: daily at {RETRAINING_HOUR}:00"
+            msg = f"✓ Scheduled retraining job: every {RETRAINING_INTERVAL_HOURS} hours"
             logger.info(msg)
             print(msg)
         

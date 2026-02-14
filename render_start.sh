@@ -36,6 +36,6 @@ else
   echo "Clusters already exist — skipping"
 fi
 
-# Start the app (single worker to keep scheduler singleton)
+# Start the app (single worker to keep scheduler singleton, extended timeout for API calls)
 echo "Starting gunicorn..."
-exec gunicorn -k uvicorn.workers.UvicornWorker Backend.main:app --bind 0.0.0.0:$PORT --workers 1
+exec gunicorn -k uvicorn.workers.UvicornWorker Backend.main:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120
