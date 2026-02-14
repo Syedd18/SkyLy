@@ -233,7 +233,7 @@ def fetch_weather(lat: float, lng: float) -> Optional[dict]:
 # --------------- Store Measurement ---------------
 
 def _store_measurement(conn, is_pg: bool, row: dict):
-    """Insert a single AQI measurement row (replaces older record for same city+timestamp)."""
+    """Append a new AQI measurement row. Skips if same city+timestamp already exists (dedup only)."""
     cols = [
         "city", "state", "latitude", "longitude", "timestamp",
         "aqi", "pm25", "pm10", "no2", "so2", "co", "o3",
@@ -242,22 +242,28 @@ def _store_measurement(conn, is_pg: bool, row: dict):
     vals = [row.get(c) for c in cols]
 
     if is_pg:
-        # Delete any existing records for this city + timestamp to avoid duplicates
-        conn.cursor().execute(
-            "DELETE FROM aqi_measurements WHERE city = %s AND timestamp = %s",
+        # Check if row already exists — skip if so (never delete old data)
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT 1 FROM aqi_measurements WHERE city = %s AND timestamp = %s LIMIT 1",
             (row.get("city"), row.get("timestamp")),
         )
+        if cur.fetchone():
+            return False  # already exists, skip
         placeholders = ", ".join(["%s"] * len(cols))
         sql = f"INSERT INTO aqi_measurements ({', '.join(cols)}) VALUES ({placeholders})"
-        conn.cursor().execute(sql, vals)
+        cur.execute(sql, vals)
     else:
-        conn.execute(
-            "DELETE FROM aqi_measurements WHERE city = ? AND timestamp = ?",
+        cur = conn.execute(
+            "SELECT 1 FROM aqi_measurements WHERE city = ? AND timestamp = ? LIMIT 1",
             (row.get("city"), row.get("timestamp")),
         )
+        if cur.fetchone():
+            return False  # already exists, skip
         placeholders = ", ".join(["?"] * len(cols))
         sql = f"INSERT INTO aqi_measurements ({', '.join(cols)}) VALUES ({placeholders})"
         conn.execute(sql, vals)
+    return True  # new row inserted
 
 
 # --------------- Main Ingestion ---------------
@@ -332,11 +338,15 @@ def run_ingestion(cities: list[dict] | None = None, max_workers: int = 10) -> di
 
     # Store all results
     stored = 0
+    skipped = 0
     with get_intel_conn() as (conn, is_pg):
         for row in results:
             try:
-                _store_measurement(conn, is_pg, row)
-                stored += 1
+                inserted = _store_measurement(conn, is_pg, row)
+                if inserted:
+                    stored += 1
+                else:
+                    skipped += 1
             except Exception as e:
                 logger.warning(f"DB insert failed for {row.get('city')}: {e}")
         conn.commit()
@@ -344,11 +354,12 @@ def run_ingestion(cities: list[dict] | None = None, max_workers: int = 10) -> di
     duration = round(time.time() - start, 2)
     summary = {
         "ingested": stored,
-        "failed": len(cities) - stored,
+        "skipped": skipped,
+        "failed": len(cities) - len(results),
         "duration_s": duration,
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
-    logger.info(f"Ingestion complete: {stored}/{len(cities)} cities in {duration}s")
+    logger.info(f"Ingestion complete: {stored} new, {skipped} skipped, {len(cities) - len(results)} failed in {duration}s")
     return summary
 
 
