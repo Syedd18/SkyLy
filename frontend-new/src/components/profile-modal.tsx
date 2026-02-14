@@ -115,7 +115,15 @@ export function ProfileModal({ trigger }: ProfileDropdownProps) {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-72 bg-background border border-border rounded-lg shadow-lg overflow-hidden z-50 animate-fade-in-up max-h-[calc(100vh-100px)] flex flex-col">
+        <div className={cn(
+          "absolute mt-2 z-50",
+          "left-2 right-2 sm:left-auto sm:right-0",
+          "w-auto sm:w-72",
+          "max-w-[calc(100vw-1rem)]",
+          "bg-background border border-border rounded-lg shadow-lg",
+          "overflow-hidden animate-fade-in-up",
+          "max-h-[calc(100vh-100px)] flex flex-col"
+        )}>
           {showPreferences ? (
             /* Preferences view */
             <>
