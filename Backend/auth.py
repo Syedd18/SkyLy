@@ -45,7 +45,7 @@ security = HTTPBearer()
 # ---------------- Supabase config (optional) ----------------
 SUPABASE_URL = os.getenv("SUPABASE_URL") or os.getenv("NEXT_PUBLIC_SUPABASE_URL")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY") or os.getenv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY")
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY") or os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY") or os.getenv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY")
 # Flags: anon key + URL required for normal Supabase auth operations; service role is optional (admin-only)
 SUPABASE_AVAILABLE = bool(SUPABASE_URL and SUPABASE_ANON_KEY)
 SUPABASE_SERVICE_AVAILABLE = bool(SUPABASE_SERVICE_ROLE_KEY)
@@ -308,15 +308,18 @@ def supabase_sign_in(email: str, password: str) -> dict:
 def supabase_get_user_from_token(token: str) -> Optional[dict]:
     """Validate an access token with Supabase and return the user object if valid."""
     if not SUPABASE_AVAILABLE:
+        print(f"AUTH: supabase_get_user_from_token - SUPABASE_AVAILABLE=False (URL={bool(SUPABASE_URL)}, ANON_KEY={bool(SUPABASE_ANON_KEY)})")
         return None
 
     url = f"{SUPABASE_URL.rstrip('/')}/auth/v1/user"
     headers = {"Authorization": f"Bearer {token}", "apikey": SUPABASE_ANON_KEY}
     try:
         r = requests.get(url, headers=headers, timeout=8)
-    except requests.RequestException:
+    except requests.RequestException as e:
+        print(f"AUTH: supabase_get_user_from_token - Request error: {e}")
         return None
     if r.status_code != 200:
+        print(f"AUTH: supabase_get_user_from_token - Supabase returned status {r.status_code}: {r.text[:200]}")
         return None
     try:
         return r.json()

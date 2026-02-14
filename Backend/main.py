@@ -1184,8 +1184,10 @@ async def supabase_callback(data: SupabaseCallbackData):
         # Validate the Supabase token by fetching user info
         from Backend.auth import supabase_get_user_from_token
         
+        print(f"SUPABASE CALLBACK: Received token (first 30 chars): {data.access_token[:30]}...")
         user_info = supabase_get_user_from_token(data.access_token)
         if not user_info:
+            print(f"SUPABASE CALLBACK: Token validation failed - supabase_get_user_from_token returned None")
             raise HTTPException(status_code=401, detail="Invalid Supabase token")
         
         email = user_info.get("email")
