@@ -195,6 +195,11 @@ INDIAN_CITIES = [
     {"name": "Aligarh", "lat": 27.8974, "lng": 78.0880},
     {"name": "Mathura", "lat": 27.4924, "lng": 77.6737},
     {"name": "Firozabad", "lat": 27.1591, "lng": 78.3957},
+    {"name": "Saharanpur", "lat": 29.9680, "lng": 77.5460},
+    {"name": "Jhansi", "lat": 25.4484, "lng": 78.5685},
+    {"name": "Sultanpur", "lat": 26.2648, "lng": 82.0727},
+    {"name": "Loni", "lat": 28.7316, "lng": 77.2874},
+    {"name": "Greater Noida", "lat": 28.4744, "lng": 77.5040},
     # ── NCR / Haryana ──
     {"name": "Gurugram", "lat": 28.4595, "lng": 77.0266},
     {"name": "Faridabad", "lat": 28.4089, "lng": 77.3178},
@@ -203,18 +208,32 @@ INDIAN_CITIES = [
     {"name": "Ambala", "lat": 30.3782, "lng": 76.7767},
     {"name": "Rohtak", "lat": 28.8955, "lng": 76.6066},
     {"name": "Karnal", "lat": 29.6857, "lng": 76.9905},
+    {"name": "Sonipat", "lat": 28.9931, "lng": 77.0151},
+    {"name": "Yamunanagar", "lat": 30.1290, "lng": 77.2674},
+    {"name": "Bahadurgarh", "lat": 28.6926, "lng": 76.9353},
+    {"name": "Ballabgarh", "lat": 28.3418, "lng": 77.3216},
+    {"name": "Kurukshetra", "lat": 29.9695, "lng": 76.8783},
+    {"name": "Manesar", "lat": 28.3590, "lng": 76.9345},
     # ── Punjab ──
     {"name": "Amritsar", "lat": 31.6340, "lng": 74.8723},
     {"name": "Ludhiana", "lat": 30.9010, "lng": 75.8573},
     {"name": "Jalandhar", "lat": 31.3260, "lng": 75.5762},
     {"name": "Patiala", "lat": 30.3398, "lng": 76.3869},
     {"name": "Bathinda", "lat": 30.2110, "lng": 74.9455},
+    {"name": "Khanna", "lat": 30.7046, "lng": 76.2117},
+    {"name": "Mandi Gobindgarh", "lat": 30.6687, "lng": 76.2985},
+    {"name": "Rupnagar", "lat": 30.9660, "lng": 76.5260},
     # ── Chandigarh / Uttarakhand / HP / J&K ──
     {"name": "Chandigarh", "lat": 30.7333, "lng": 76.7794},
     {"name": "Dehradun", "lat": 30.3165, "lng": 78.0322},
     {"name": "Roorkee", "lat": 29.8543, "lng": 77.8880},
     {"name": "Haridwar", "lat": 29.9457, "lng": 78.1642},
+    {"name": "Rishikesh", "lat": 30.0869, "lng": 78.2676},
+    {"name": "Haldwani", "lat": 29.2183, "lng": 79.5130},
+    {"name": "Kashipur", "lat": 29.2104, "lng": 78.9531},
     {"name": "Shimla", "lat": 31.1048, "lng": 77.1734},
+    {"name": "Baddi", "lat": 30.9578, "lng": 76.7914},
+    {"name": "Damtal", "lat": 32.0597, "lng": 76.2170},
     {"name": "Srinagar", "lat": 34.0837, "lng": 74.7973},
     {"name": "Jammu", "lat": 32.7266, "lng": 74.8570},
     # ── Rajasthan ──
@@ -225,6 +244,9 @@ INDIAN_CITIES = [
     {"name": "Bikaner", "lat": 28.0229, "lng": 73.3119},
     {"name": "Alwar", "lat": 27.5530, "lng": 76.6346},
     {"name": "Bhiwadi", "lat": 28.2096, "lng": 76.8614},
+    {"name": "Pali", "lat": 25.7711, "lng": 73.3234},
+    {"name": "Sikar", "lat": 27.6094, "lng": 75.1399},
+    {"name": "Chittorgarh", "lat": 24.8887, "lng": 74.6269},
     # ── Gujarat ──
     {"name": "Rajkot", "lat": 22.3039, "lng": 70.8022},
     {"name": "Vadodara", "lat": 22.3072, "lng": 73.1812},
@@ -232,6 +254,10 @@ INDIAN_CITIES = [
     {"name": "Vapi", "lat": 20.3717, "lng": 72.9049},
     {"name": "Gandhinagar", "lat": 23.2156, "lng": 72.6369},
     {"name": "Ankleshwar", "lat": 21.6264, "lng": 73.0152},
+    {"name": "Junagadh", "lat": 21.5222, "lng": 70.4579},
+    {"name": "Bhavnagar", "lat": 21.7645, "lng": 72.1519},
+    {"name": "Jamnagar", "lat": 22.4707, "lng": 70.0577},
+    {"name": "Navsari", "lat": 20.9467, "lng": 72.9520},
     # ── Madhya Pradesh ──
     {"name": "Nagpur", "lat": 21.1458, "lng": 79.0882},
     {"name": "Indore", "lat": 22.7196, "lng": 75.8577},
@@ -241,6 +267,14 @@ INDIAN_CITIES = [
     {"name": "Ujjain", "lat": 23.1765, "lng": 75.7885},
     {"name": "Dewas", "lat": 22.9623, "lng": 76.0508},
     {"name": "Singrauli", "lat": 24.1996, "lng": 82.6757},
+    {"name": "Sagar", "lat": 23.8388, "lng": 78.7378},
+    {"name": "Satna", "lat": 24.5004, "lng": 80.8322},
+    {"name": "Ratlam", "lat": 23.3315, "lng": 75.0367},
+    {"name": "Rewa", "lat": 24.5362, "lng": 81.3037},
+    {"name": "Katni", "lat": 23.8343, "lng": 80.3925},
+    {"name": "Damoh", "lat": 23.8361, "lng": 79.4421},
+    {"name": "Mandideep", "lat": 23.0833, "lng": 77.5333},
+    {"name": "Pithampur", "lat": 22.6046, "lng": 75.6846},
     # ── Maharashtra ──
     {"name": "Nashik", "lat": 19.9975, "lng": 73.7898},
     {"name": "Aurangabad", "lat": 19.8762, "lng": 75.3433},
@@ -249,6 +283,13 @@ INDIAN_CITIES = [
     {"name": "Navi Mumbai", "lat": 19.0330, "lng": 73.0297},
     {"name": "Thane", "lat": 19.2183, "lng": 72.9781},
     {"name": "Chandrapur", "lat": 19.9615, "lng": 79.2961},
+    {"name": "Kalyan", "lat": 19.2437, "lng": 73.1355},
+    {"name": "Vasai-Virar", "lat": 19.4207, "lng": 72.8280},
+    {"name": "Amravati", "lat": 20.9320, "lng": 77.7523},
+    {"name": "Sangli", "lat": 16.8524, "lng": 74.5815},
+    {"name": "Jalgaon", "lat": 21.0077, "lng": 75.5626},
+    {"name": "Akola", "lat": 20.7002, "lng": 77.0082},
+    {"name": "Latur", "lat": 18.3968, "lng": 76.5604},
     # ── Goa ──
     {"name": "Goa", "lat": 15.2993, "lng": 74.1240},
     # ── Karnataka ──
@@ -258,6 +299,9 @@ INDIAN_CITIES = [
     {"name": "Belgaum", "lat": 15.8497, "lng": 74.4977},
     {"name": "Davangere", "lat": 14.4644, "lng": 75.9218},
     {"name": "Kalaburagi", "lat": 17.3297, "lng": 76.8343},
+    {"name": "Raichur", "lat": 16.2076, "lng": 77.3463},
+    {"name": "Bidar", "lat": 17.9104, "lng": 77.5199},
+    {"name": "Chikkamagaluru", "lat": 13.3161, "lng": 75.7720},
     # ── Tamil Nadu ──
     {"name": "Coimbatore", "lat": 11.0168, "lng": 76.9558},
     {"name": "Madurai", "lat": 9.9252, "lng": 78.1198},
@@ -265,10 +309,15 @@ INDIAN_CITIES = [
     {"name": "Vellore", "lat": 12.9165, "lng": 79.1325},
     {"name": "Erode", "lat": 11.3410, "lng": 77.7172},
     {"name": "Thoothukudi", "lat": 8.7642, "lng": 78.1348},
+    {"name": "Tirunelveli", "lat": 8.7139, "lng": 77.7567},
+    {"name": "Tiruppur", "lat": 11.1085, "lng": 77.3411},
+    {"name": "Dindigul", "lat": 10.3624, "lng": 77.9695},
     # ── Kerala ──
     {"name": "Thiruvananthapuram", "lat": 8.5241, "lng": 76.9366},
     {"name": "Kochi", "lat": 9.9312, "lng": 76.2673},
     {"name": "Kozhikode", "lat": 11.2588, "lng": 75.7804},
+    {"name": "Thrissur", "lat": 10.5276, "lng": 76.2144},
+    {"name": "Kollam", "lat": 8.8932, "lng": 76.6141},
     # ── Andhra Pradesh / Telangana ──
     {"name": "Visakhapatnam", "lat": 17.6868, "lng": 83.2185},
     {"name": "Vijayawada", "lat": 16.5062, "lng": 80.6480},
@@ -281,23 +330,34 @@ INDIAN_CITIES = [
     {"name": "Nellore", "lat": 14.4426, "lng": 79.9865},
     {"name": "Kurnool", "lat": 15.8281, "lng": 78.0373},
     {"name": "Anantapur", "lat": 14.6819, "lng": 77.6006},
+    {"name": "Eluru", "lat": 16.7107, "lng": 81.0952},
+    {"name": "Ongole", "lat": 15.5057, "lng": 80.0499},
+    {"name": "Kadapa", "lat": 14.4674, "lng": 78.8241},
+    {"name": "Sangareddy", "lat": 17.6147, "lng": 78.0862},
     # ── Odisha ──
     {"name": "Bhubaneswar", "lat": 20.2961, "lng": 85.8245},
     {"name": "Cuttack", "lat": 20.4625, "lng": 85.8828},
     {"name": "Rourkela", "lat": 22.2604, "lng": 84.8536},
     {"name": "Talcher", "lat": 20.9517, "lng": 85.2133},
+    {"name": "Berhampur", "lat": 19.3150, "lng": 84.7941},
+    {"name": "Sambalpur", "lat": 21.4669, "lng": 83.9812},
     # ── Bihar / Jharkhand ──
     {"name": "Patna", "lat": 25.5941, "lng": 85.1376},
     {"name": "Gaya", "lat": 24.7955, "lng": 84.9994},
     {"name": "Muzaffarpur", "lat": 26.1209, "lng": 85.3647},
+    {"name": "Bhagalpur", "lat": 25.2425, "lng": 86.9842},
+    {"name": "Begusarai", "lat": 25.4182, "lng": 86.1272},
     {"name": "Ranchi", "lat": 23.3441, "lng": 85.3096},
     {"name": "Jamshedpur", "lat": 22.8046, "lng": 86.2029},
     {"name": "Dhanbad", "lat": 23.7957, "lng": 86.4304},
     {"name": "Bokaro", "lat": 23.6693, "lng": 86.1511},
+    {"name": "Hazaribagh", "lat": 23.9966, "lng": 85.3637},
+    {"name": "Deoghar", "lat": 24.4764, "lng": 86.6932},
     # ── Chhattisgarh ──
     {"name": "Raipur", "lat": 21.2514, "lng": 81.6296},
     {"name": "Bhilai", "lat": 21.2094, "lng": 81.3784},
     {"name": "Korba", "lat": 22.3595, "lng": 82.7501},
+    {"name": "Bilaspur", "lat": 22.0797, "lng": 82.1409},
     # ── West Bengal ──
     {"name": "Durgapur", "lat": 23.5204, "lng": 87.3119},
     {"name": "Asansol", "lat": 23.6739, "lng": 86.9524},
@@ -305,6 +365,8 @@ INDIAN_CITIES = [
     {"name": "Howrah", "lat": 22.5958, "lng": 88.2636},
     {"name": "Haldia", "lat": 22.0667, "lng": 88.0698},
     {"name": "Barrackpore", "lat": 22.7602, "lng": 88.3702},
+    {"name": "Kharagpur", "lat": 22.3460, "lng": 87.2320},
+    {"name": "Bardhaman", "lat": 23.2324, "lng": 87.8615},
     # ── Northeast ──
     {"name": "Guwahati", "lat": 26.1445, "lng": 91.7362},
     {"name": "Shillong", "lat": 25.5788, "lng": 91.8933},
@@ -316,6 +378,9 @@ INDIAN_CITIES = [
     {"name": "Silchar", "lat": 24.8333, "lng": 92.7789},
     {"name": "Itanagar", "lat": 27.0844, "lng": 93.6053},
     {"name": "Gangtok", "lat": 27.3389, "lng": 88.6065},
+    {"name": "Tezpur", "lat": 26.6338, "lng": 92.7926},
+    {"name": "Jorhat", "lat": 26.7509, "lng": 94.2037},
+    {"name": "Nagaon", "lat": 26.3464, "lng": 92.6840},
 ]
 
 # ---------------- HELPER FUNCTIONS ----------------
@@ -446,9 +511,9 @@ def get_available_cities():
             if res:
                 results.append(res)
 
-    # Sort: cities with AQI first (descending), then cities without AQI alphabetically
-    with_aqi = sorted([r for r in results if r.get("aqi") is not None], key=lambda x: x["aqi"], reverse=True)
-    without_aqi = sorted([r for r in results if r.get("aqi") is None], key=lambda x: x["name"])
+    # Filter out cities with AQI of 0 or None (0 means sensor offline / no real data)
+    with_aqi = sorted([r for r in results if r.get("aqi") and r["aqi"] > 0], key=lambda x: x["aqi"], reverse=True)
+    without_aqi = sorted([r for r in results if not r.get("aqi") or r["aqi"] <= 0], key=lambda x: x["name"])
     results = with_aqi + without_aqi
 
     return {"cities": results, "count": len(results)}
