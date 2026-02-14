@@ -354,9 +354,9 @@ export default function AnalyticsPage() {
                                 <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.6} />
                               </linearGradient>
                             </defs>
-                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
-                            <XAxis dataKey="season" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={{ stroke: 'hsl(var(--border))' }} />
-                            <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={{ stroke: 'hsl(var(--border))' }} width={35} />
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--border))" opacity={0.5} />
+                            <XAxis dataKey="season" tick={{ fontSize: 10, fill: 'rgb(var(--muted-foreground))' }} axisLine={{ stroke: 'rgb(var(--border))' }} />
+                            <YAxis tick={{ fontSize: 10, fill: 'rgb(var(--muted-foreground))' }} axisLine={{ stroke: 'rgb(var(--border))' }} width={35} />
                             <Tooltip content={<CustomTooltip />} />
                             <Bar dataKey="aqi" fill="url(#barGradient)" radius={[6, 6, 0, 0]} />
                           </BarChart>
@@ -394,9 +394,9 @@ export default function AnalyticsPage() {
                   <ResponsiveContainer width="100%" height="100%">
                     {series.length ? (
                       <LineChart data={computeYearlyComparison(series)} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
-                        <XAxis dataKey="year" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={{ stroke: 'hsl(var(--border))' }} />
-                        <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={{ stroke: 'hsl(var(--border))' }} width={35} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--border))" opacity={0.5} />
+                        <XAxis dataKey="year" tick={{ fontSize: 10, fill: 'rgb(var(--muted-foreground))' }} axisLine={{ stroke: 'rgb(var(--border))' }} />
+                        <YAxis tick={{ fontSize: 10, fill: 'rgb(var(--muted-foreground))' }} axisLine={{ stroke: 'rgb(var(--border))' }} width={35} />
                         <Tooltip content={<CustomTooltip />} />
                         <Line type="monotone" dataKey="aqi" stroke="#ED1B24" strokeWidth={2.5} dot={{ fill: "#ED1B24", strokeWidth: 2, r: 4 }} activeDot={{ r: 6, strokeWidth: 2, stroke: '#fff' }} />
                       </LineChart>
@@ -433,22 +433,22 @@ export default function AnalyticsPage() {
                     <AreaChart data={series} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
                       <defs>
                         <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                          <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                          <stop offset="0%" stopColor="rgb(var(--primary))" stopOpacity={0.3} />
+                          <stop offset="100%" stopColor="rgb(var(--primary))" stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--border))" opacity={0.5} />
                       <XAxis 
                         dataKey="date" 
                         tickFormatter={(value) => {
                           const date = new Date(value)
                           return isNaN(+date) ? value : date.toLocaleDateString(undefined, { month: 'short', year: '2-digit' })
                         }}
-                        tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }}
-                        axisLine={{ stroke: 'hsl(var(--border))' }}
+                        tick={{ fontSize: 9, fill: 'rgb(var(--muted-foreground))' }}
+                        axisLine={{ stroke: 'rgb(var(--border))' }}
                         interval="preserveStartEnd"
                       />
-                      <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={{ stroke: 'hsl(var(--border))' }} width={35} />
+                      <YAxis tick={{ fontSize: 10, fill: 'rgb(var(--muted-foreground))' }} axisLine={{ stroke: 'rgb(var(--border))' }} width={35} />
                       <Tooltip 
                         content={<CustomTooltip />}
                         labelFormatter={(value) => {
@@ -456,7 +456,7 @@ export default function AnalyticsPage() {
                           return isNaN(+date) ? value : date.toLocaleDateString(undefined, { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })
                         }}
                       />
-                      <Area type="monotone" dataKey="aqi" stroke="hsl(var(--primary))" fill="url(#areaGradient)" strokeWidth={2} />
+                      <Area type="monotone" dataKey="aqi" stroke="rgb(var(--primary))" fill="url(#areaGradient)" strokeWidth={2} />
                     </AreaChart>
                   ) : (
                     <div className="h-full flex items-center justify-center text-muted-foreground">Select a city to view historical data</div>

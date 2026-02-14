@@ -60,12 +60,17 @@ export function AQITrendChart({ location }: AQITrendChartProps) {
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={trendData}>
-            <CartesianGrid strokeDasharray="3 3" />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--border))" opacity={0.5} />
             <XAxis
               dataKey="date"
               tickFormatter={(value) => new Date(value).toLocaleDateString()}
+              tick={{ fontSize: 10, fill: 'rgb(var(--muted-foreground))' }}
+              axisLine={{ stroke: 'rgb(var(--border))' }}
             />
-            <YAxis />
+            <YAxis
+              tick={{ fontSize: 10, fill: 'rgb(var(--muted-foreground))' }}
+              axisLine={{ stroke: 'rgb(var(--border))' }}
+            />
             <Tooltip
               labelFormatter={(value) => new Date(value).toLocaleDateString()}
               formatter={(value: number | undefined) => [value || 0, "AQI"]}

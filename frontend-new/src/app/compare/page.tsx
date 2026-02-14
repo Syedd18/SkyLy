@@ -610,9 +610,9 @@ export default function ComparePage() {
                           <stop offset="100%" stopColor="#4DB748" stopOpacity={0.6} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
-                      <XAxis dataKey="pollutant" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
-                      <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} width={35} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--border))" opacity={0.5} />
+                      <XAxis dataKey="pollutant" tick={{ fontSize: 10, fill: 'rgb(var(--muted-foreground))' }} />
+                      <YAxis tick={{ fontSize: 10, fill: 'rgb(var(--muted-foreground))' }} width={35} />
                       <Tooltip content={<CustomTooltip />} />
                       <Legend wrapperStyle={{ fontSize: '12px' }} />
                       <Bar dataKey={city1} fill="url(#blueGradient)" name={city1} radius={[6, 6, 0, 0]} />
@@ -720,17 +720,17 @@ export default function ComparePage() {
                         <stop offset="95%" stopColor="#4DB748" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--border))" opacity={0.5} />
                     <XAxis 
                       dataKey="date" 
-                      tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }}
+                      tick={{ fontSize: 9, fill: 'rgb(var(--muted-foreground))' }}
                       tickFormatter={(value) => {
                         const date = new Date(value)
                         return isNaN(+date) ? value : date.toLocaleDateString(undefined, { month: 'short', year: '2-digit' })
                       }}
                       interval="preserveStartEnd"
                     />
-                    <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} width={35} />
+                    <YAxis tick={{ fontSize: 10, fill: 'rgb(var(--muted-foreground))' }} width={35} />
                     <Tooltip content={<CustomTooltip />} />
                     <Legend wrapperStyle={{ fontSize: '12px' }} />
                     <Line
