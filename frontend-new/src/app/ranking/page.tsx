@@ -354,15 +354,15 @@ export default function RankingPage() {
                         }`}
                         style={isTopThree ? { '--tw-ring-color': `${category.color}33` } as React.CSSProperties : undefined}
                       >
-                        <div className="flex items-center gap-3 lg:gap-4 flex-1 min-w-0">
+                        <div className="flex items-center gap-3 lg:gap-4 flex-1 min-w-0 w-full sm:w-auto">
                           <div className={`flex items-center justify-center w-9 h-9 lg:w-10 lg:h-10 rounded-full shrink-0 text-sm lg:text-base font-semibold ${
-                            isTopThree 
-                              ? "bg-gradient-to-br from-yellow-400 to-orange-500 text-white shadow-lg shadow-yellow-500/20" 
+                            isTopThree
+                              ? "bg-gradient-to-br from-yellow-400 to-orange-500 text-white shadow-lg shadow-yellow-500/20"
                               : "bg-muted text-muted-foreground"
                           }`}>
                             {getRankIcon(index) || (index + 1)}
                           </div>
-                          <div className="flex-1 min-w-0">
+                          <div className="flex-1 min-w-0 overflow-hidden">
                             <div className="flex items-center gap-2">
                               <h3 className="text-sm lg:text-base font-semibold truncate">{city.name}</h3>
                               {isTopThree && <Crown className="h-3 w-3 text-yellow-500 shrink-0" />}

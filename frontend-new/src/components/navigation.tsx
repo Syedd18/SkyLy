@@ -3,12 +3,13 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useTheme } from "next-themes"
-import { 
-  Moon, 
-  Sun, 
-  Wind, 
-  Menu, 
-  X, 
+import { useAuth } from "@/contexts/auth-context"
+import {
+  Moon,
+  Sun,
+  Wind,
+  Menu,
+  X,
   Home,
   Activity,
   Map,
@@ -19,14 +20,13 @@ import {
   Brain,
   Heart,
   Info,
-  ChevronDown
+  ChevronDown,
+  User
 } from "lucide-react"
 import { useRef, useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { AuthModal } from "@/components/auth-modal"
-import Chatbot from "@/components/chatbot"
-import { cn } from "@/lib/utils"
-
+import { ProfileModal } from "@/components/profile-modal"
 // Navigation link configuration for easy maintenance
 const primaryNavLinks = [
   { href: "/", label: "Dashboard", icon: Home },
@@ -331,6 +331,26 @@ export function Navigation() {
                 <AuthModal />
                 <ThemeToggle />
               </div>
+
+              {/* Mobile profile - show only when logged in */}
+              {user && (
+                <div className="lg:hidden">
+                  <ProfileModal
+                    trigger={
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 rounded-lg"
+                        aria-label="Profile"
+                      >
+                        <div className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-xs font-semibold">
+                          {user.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : <User className="h-4 w-4" />}
+                        </div>
+                      </Button>
+                    }
+                  />
+                </div>
+              )}
 
               {/* Mobile menu button */}
               <Button
