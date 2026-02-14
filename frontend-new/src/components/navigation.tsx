@@ -177,6 +177,7 @@ function ThemeToggle() {
 
 export function Navigation() {
   const pathname = usePathname()
+  const { user } = useAuth()
   const [moreMenuOpen, setMoreMenuOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
