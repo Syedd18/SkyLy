@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback, useRef, startTransition } from "react"
 import { useAuth } from "@/contexts/auth-context"
 import { useTheme } from "next-themes"
 import { 
-  User, MapPin, Bell, BellOff, Mail, Calendar, LogOut, ChevronDown, Star,
+  User, MapPin, Bell, BellOff, Calendar, LogOut, Star,
   Monitor, Sun, Moon, Languages, Globe
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -24,13 +24,20 @@ export function ProfileModal({ trigger }: ProfileDropdownProps) {
   const { theme, setTheme } = useTheme()
   const [isOpen, setIsOpen] = useState(false)
   const [favorites, setFavorites] = useState<FavoriteCity[]>([])
-  const [emailNotifications, setEmailNotifications] = useState(true)
+  const [emailNotifications, setEmailNotifications] = useState(() => {
+    if (typeof window === 'undefined') return true
+    try {
+      const prefs = localStorage.getItem('notification_prefs')
+      if (prefs) return JSON.parse(prefs).email ?? true
+    } catch { /* ignore */ }
+    return true
+  })
   const [showFavorites, setShowFavorites] = useState(false)
   const [showPreferences, setShowPreferences] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const [mounted, setMounted] = useState(false)
 
-  useEffect(() => setMounted(true), [])
+  useEffect(() => { startTransition(() => setMounted(true)) }, [])
 
   // Close on outside click
   useEffect(() => {
@@ -55,7 +62,7 @@ export function ProfileModal({ trigger }: ProfileDropdownProps) {
       })
       if (res.ok) {
         const data = await res.json()
-        setFavorites(data.favorites || [])
+        startTransition(() => setFavorites(data.favorites || []))
       }
     } catch { /* silently fail */ }
   }, [token])
@@ -65,17 +72,6 @@ export function ProfileModal({ trigger }: ProfileDropdownProps) {
       fetchFavorites()
     }
   }, [isOpen, token, favorites.length, fetchFavorites])
-
-  // Load notification preferences
-  useEffect(() => {
-    const prefs = localStorage.getItem('notification_prefs')
-    if (prefs) {
-      try {
-        const parsed = JSON.parse(prefs)
-        setEmailNotifications(parsed.email ?? true)
-      } catch { /* ignore */ }
-    }
-  }, [])
 
   const toggleNotifications = () => {
     const newValue = !emailNotifications
@@ -137,7 +133,7 @@ export function ProfileModal({ trigger }: ProfileDropdownProps) {
           {showPreferences ? (
             /* Preferences view */
             <>
-              <div className="px-4 py-3 border-b border-border flex items-center justify-between flex-shrink-0">
+              <div className="px-4 py-3 border-b border-border flex items-center justify-between shrink-0">
                 <button 
                   onClick={() => setShowPreferences(false)}
                   className="text-sm text-muted-foreground hover:text-foreground"
@@ -235,7 +231,7 @@ export function ProfileModal({ trigger }: ProfileDropdownProps) {
           ) : showFavorites ? (
             /* Favorites view */
             <>
-              <div className="px-4 py-3 border-b border-border flex items-center justify-between flex-shrink-0">
+              <div className="px-4 py-3 border-b border-border flex items-center justify-between shrink-0">
                 <button 
                   onClick={() => setShowFavorites(false)}
                   className="text-sm text-muted-foreground hover:text-foreground"
@@ -258,7 +254,7 @@ export function ProfileModal({ trigger }: ProfileDropdownProps) {
                         key={fav.city}
                         className="px-4 py-2.5 hover:bg-muted/50 flex items-center gap-2 transition-colors"
                       >
-                        <MapPin className="w-4 h-4 text-primary flex-shrink-0" />
+                        <MapPin className="w-4 h-4 text-primary shrink-0" />
                         <span className="text-sm truncate">{fav.city}</span>
                       </div>
                     ))}
@@ -270,9 +266,9 @@ export function ProfileModal({ trigger }: ProfileDropdownProps) {
             /* Main menu */
             <>
               {/* User info header */}
-              <div className="px-4 py-3 border-b border-border flex-shrink-0">
+              <div className="px-4 py-3 border-b border-border shrink-0">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold shrink-0">
                     {user?.name ? getInitials(user.name) : <User className="w-5 h-5" />}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -282,11 +278,11 @@ export function ProfileModal({ trigger }: ProfileDropdownProps) {
                 </div>
                 <div className="mt-2.5 flex items-center gap-3 sm:gap-4 text-xs text-muted-foreground flex-wrap">
                   <div className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3 flex-shrink-0" />
+                    <Calendar className="w-3 h-3 shrink-0" />
                     <span className="truncate">{memberSince}</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Star className="w-3 h-3 flex-shrink-0" />
+                    <Star className="w-3 h-3 shrink-0" />
                     <span>{favorites.length} saved</span>
                   </div>
                 </div>
@@ -298,9 +294,9 @@ export function ProfileModal({ trigger }: ProfileDropdownProps) {
                   onClick={() => setShowFavorites(true)}
                   className="w-full px-4 py-2.5 text-left text-sm hover:bg-muted/50 flex items-center gap-3 transition-colors"
                 >
-                  <MapPin className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                  <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
                   <span className="flex-1 truncate">Favourite Cities</span>
-                  <span className="text-xs text-muted-foreground flex-shrink-0">{favorites.length}</span>
+                  <span className="text-xs text-muted-foreground shrink-0">{favorites.length}</span>
                 </button>
 
                 <button
@@ -308,23 +304,23 @@ export function ProfileModal({ trigger }: ProfileDropdownProps) {
                   className="w-full px-4 py-2.5 text-left text-sm hover:bg-muted/50 flex items-center gap-3 transition-colors"
                 >
                   {mounted && theme === 'dark' ? (
-                    <Moon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    <Moon className="w-4 h-4 text-muted-foreground shrink-0" />
                   ) : mounted && theme === 'light' ? (
-                    <Sun className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    <Sun className="w-4 h-4 text-muted-foreground shrink-0" />
                   ) : (
-                    <Monitor className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    <Monitor className="w-4 h-4 text-muted-foreground shrink-0" />
                   )}
                   <span className="flex-1 truncate">Preferences</span>
                 </button>
               </div>
 
               {/* Logout */}
-              <div className="border-t border-border py-1 flex-shrink-0">
+              <div className="border-t border-border py-1 shrink-0">
                 <button
                   onClick={() => { logout(); setIsOpen(false) }}
                   className="w-full px-4 py-2.5 text-left text-sm hover:bg-destructive/10 text-destructive flex items-center gap-3 transition-colors"
                 >
-                  <LogOut className="w-4 h-4 flex-shrink-0" />
+                  <LogOut className="w-4 h-4 shrink-0" />
                   <span className="truncate">Log out</span>
                 </button>
               </div>

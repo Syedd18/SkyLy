@@ -24,10 +24,7 @@ import {
   Wind,
   BarChart3,
   Clock,
-  ExternalLink,
-  User,
-  Mail,
-  LogOut
+  ExternalLink
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -299,7 +296,7 @@ function FavoriteCard({
 }
 
 export default function Dashboard() {
-  const { isAuthenticated, token, user, logout } = useAuth()
+  const { isAuthenticated, token, user } = useAuth()
   const [favorites, setFavorites] = useState<Favorite[]>([])
   const [stats, setStats] = useState({
     totalCities: 0,

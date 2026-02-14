@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useTheme } from "next-themes"
 import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -35,6 +36,8 @@ function getAQICategory(aqi: number) {
 }
 
 export default function MapComponent() {
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
   const [cities, setCities] = useState<CityMapData[]>([])
   const [maxStationMap, setMaxStationMap] = useState<Record<string, { aqi: number | null; station?: string }>>({})
   const [mapError, setMapError] = useState<string | null>(null)
@@ -172,8 +175,15 @@ export default function MapComponent() {
             className="z-0"
           >
             <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              key={isDark ? 'dark' : 'light'}
+              url={isDark 
+                ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              }
+              attribution={isDark
+                ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              }
             />
 
             {cities.filter((city: CityMapData) => typeof city.lat === 'number' && typeof city.lng === 'number').map((city: CityMapData) => {

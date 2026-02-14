@@ -5,12 +5,9 @@ import {
   Send, 
   X, 
   MessageCircle, 
-  Sparkles, 
   Bot, 
   User,
-  Loader2,
-  Wind,
-  Zap
+  Loader2
 } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { cn } from "@/lib/utils"
@@ -42,7 +39,7 @@ function TypingIndicator() {
 }
 
 // Message bubble component
-function MessageBubble({ message, isLast }: { message: Message; isLast: boolean }) {
+function MessageBubble({ message }: { message: Message }) {
   const isUser = message.role === 'user'
   
   return (
@@ -142,14 +139,16 @@ export default function Chatbot({ inline = false }: ChatbotProps) {
     }
   }
 
-  // Chat window component (shared between inline and floating)
-  const ChatWindow = ({ position }: { position: 'inline' | 'floating' }) => (
+  // Chat window JSX — inlined to avoid re-mount on every keystroke
+  const chatWindowPositionClass = inline
+    ? "fixed top-16 right-4 z-50 w-[380px] max-w-[calc(100vw-2rem)] h-[500px]"
+    : "fixed bottom-24 right-6 z-50 w-[380px] max-w-[calc(100vw-3rem)] h-[500px]"
+
+  const chatWindow = (
     <div 
       className={cn(
         "flex flex-col bg-background border border-border rounded-lg shadow-xl overflow-hidden",
-        position === 'inline' 
-          ? "fixed top-16 right-4 z-50 w-[380px] max-w-[calc(100vw-2rem)] h-[500px]" 
-          : "fixed bottom-24 right-6 z-50 w-[380px] max-w-[calc(100vw-3rem)] h-[500px]"
+        chatWindowPositionClass
       )}
     >
       {/* Header */}
@@ -187,7 +186,6 @@ export default function Chatbot({ inline = false }: ChatbotProps) {
               <MessageBubble 
                 key={i} 
                 message={msg} 
-                isLast={i === messages.length - 1} 
               />
             ))}
             {loading && <TypingIndicator />}
@@ -287,12 +285,12 @@ export default function Chatbot({ inline = false }: ChatbotProps) {
       {inline ? (
         <div className="relative">
           <InlineButton />
-          {open && <ChatWindow position="inline" />}
+          {open && chatWindow}
         </div>
       ) : (
         <>
           <FloatingButton />
-          {open && <ChatWindow position="floating" />}
+          {open && chatWindow}
         </>
       )}
     </>
