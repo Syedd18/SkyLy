@@ -27,6 +27,9 @@ import { useRef, useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { AuthModal } from "@/components/auth-modal"
 import { ProfileModal } from "@/components/profile-modal"
+import Chatbot from "@/components/chatbot"
+import { cn } from "@/lib/utils"
+
 // Navigation link configuration for easy maintenance
 const primaryNavLinks = [
   { href: "/", label: "Dashboard", icon: Home },
