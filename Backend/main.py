@@ -484,21 +484,48 @@ def get_available_cities():
             if coord:
                 info["lat"], info["lng"] = coord
 
-            # Try to fetch WAQI AQI for the city with a reasonable timeout
-            url = f"https://api.waqi.info/feed/{name}/"
+            # Search for all stations in this city and pick the highest AQI
+            # This matches /live/aqi behavior (highest station) rather than
+            # feed/{name} which returns a single default station
+            search_url = "https://api.waqi.info/search/"
             try:
-                res = requests.get(url, params={"token": WAQI_TOKEN}, timeout=8)
-                data = res.json()
-                if data.get("status") == "ok":
-                    aqi_value = data.get("data", {}).get("aqi")
-                    if aqi_value not in ["-", None, ""]:
+                search_res = requests.get(search_url, params={"token": WAQI_TOKEN, "keyword": name}, timeout=8)
+                search_data = search_res.json()
+                if search_data.get("status") == "ok":
+                    best_aqi = None
+                    for station in search_data.get("data", []):
+                        # Only consider stations whose name contains the city name
+                        station_name = station.get("station", {}).get("name", "").lower()
+                        if name.lower() not in station_name:
+                            continue
+                        aqi_raw = station.get("aqi", "-")
                         try:
-                            info["aqi"] = float(aqi_value)
+                            aqi_val = float(aqi_raw) if aqi_raw != "-" else -1
                         except (ValueError, TypeError):
-                            info["aqi"] = None
+                            continue
+                        if aqi_val > 0 and (best_aqi is None or aqi_val > best_aqi):
+                            best_aqi = aqi_val
+                    if best_aqi is not None:
+                        info["aqi"] = best_aqi
+
             except requests.RequestException:
-                # Non-fatal: leave aqi as None when WAQI lookup fails
                 pass
+
+            # Fallback to feed endpoint if search didn't find anything
+            if info["aqi"] is None:
+                url = f"https://api.waqi.info/feed/{name}/"
+                try:
+                    res = requests.get(url, params={"token": WAQI_TOKEN}, timeout=5)
+                    data = res.json()
+                    if data.get("status") == "ok":
+                        aqi_value = data.get("data", {}).get("aqi")
+                        if aqi_value not in ["-", None, ""]:
+                            try:
+                                info["aqi"] = float(aqi_value)
+                            except (ValueError, TypeError):
+                                info["aqi"] = None
+                except requests.RequestException:
+                    pass
         except Exception as e:
             logging.debug(f"Error preparing city {name}: {e}")
         return info

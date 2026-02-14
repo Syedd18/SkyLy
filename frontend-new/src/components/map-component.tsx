@@ -92,7 +92,7 @@ export default function MapComponent() {
             let maxStationName: string | undefined = undefined
             for (const s of stations) {
               const a = Number.isFinite(Number(s.aqi)) ? Number(s.aqi) : (s.aqi && typeof s.aqi === 'object' && 'v' in s.aqi ? Number(s.aqi.v) : null)
-              if (typeof a === 'number' && (max === null || a > max)) {
+              if (typeof a === 'number' && a > 0 && (max === null || a > max)) {
                 max = a
                 maxStationName = s.station_name || s.name || s.station || s.location || undefined
               }

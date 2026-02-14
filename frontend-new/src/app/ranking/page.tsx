@@ -78,7 +78,7 @@ export default function RankingPage() {
               let stationName: string | undefined = undefined
               for (const s of stations) {
                 const a = Number.isFinite(Number(s.aqi)) ? Number(s.aqi) : (s.aqi && typeof s.aqi === 'object' && 'v' in s.aqi ? Number(s.aqi.v) : null)
-                if (typeof a === 'number' && (max === null || a > max)) {
+                if (typeof a === 'number' && a > 0 && (max === null || a > max)) {
                   max = a
                   // backend returns station_name; fall back to other fields if absent
                   stationName = s.station_name || s.station || s.name || s.location || s.uid || undefined
