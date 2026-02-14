@@ -231,32 +231,6 @@ export default function MapComponent() {
             })}
           </MapContainer>
 
-          {/* Legend overlay */}
-          <div className="absolute bottom-4 right-4 z-[1000] bg-background/95 backdrop-blur-sm border border-border/50 p-3 rounded-xl shadow-lg">
-            <div className="text-sm font-semibold mb-2 flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              AQI Legend
-            </div>
-            <div className="grid grid-cols-1 gap-1.5 text-xs">
-              {[
-                { value: 25, label: "Good (0-50)" },
-                { value: 75, label: "Moderate (51-100)" },
-                { value: 125, label: "Sensitive (101-150)" },
-                { value: 175, label: "Unhealthy (151-200)" },
-                { value: 250, label: "Very Unhealthy (201-300)" },
-                { value: 350, label: "Hazardous (300+)" }
-              ].map(({ value, label }) => (
-                <div key={value} className="flex items-center gap-2">
-                  <span 
-                    className="w-3 h-3 rounded-full ring-2 ring-offset-1 ring-offset-background" 
-                    style={{ backgroundColor: getAQICategory(value).color, outlineColor: getAQICategory(value).color }}
-                  />
-                  <span className="text-muted-foreground">{label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
           {/* City count badge */}
           <div className="absolute top-4 left-4 z-[1000]">
             <Badge variant="secondary" className="bg-background/95 backdrop-blur-sm border border-border/50 shadow-sm">
