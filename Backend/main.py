@@ -1132,10 +1132,15 @@ async def register(user_data: UserRegister):
 @app.get("/debug/env")
 def debug_env():
     """Return whether the server process sees Supabase keys (booleans only). Does NOT expose secrets."""
+    anon_key = SUPABASE_ANON_KEY or ""
     return {
         "supabase_available": bool(SUPABASE_AVAILABLE),
         "supabase_service_available": bool(SUPABASE_SERVICE_AVAILABLE),
         "supabase_url_set": bool(SUPABASE_URL),
+        "supabase_url": SUPABASE_URL,
+        "anon_key_length": len(anon_key),
+        "anon_key_preview": f"{anon_key[:20]}...{anon_key[-10:]}" if len(anon_key) > 30 else "too_short",
+        "anon_key_source": "SUPABASE_ANON_KEY" if os.getenv("SUPABASE_ANON_KEY") else ("NEXT_PUBLIC_SUPABASE_ANON_KEY" if os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY") else ("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY" if os.getenv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY") else "none")),
     }
 
 
