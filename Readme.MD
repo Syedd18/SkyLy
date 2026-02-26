@@ -18,7 +18,6 @@
 - [Tech Stack](#tech-stack)
 - [Architecture](#architecture)
 - [Getting Started](#getting-started)
-- [Environment Variables](#environment-variables)
 - [API Reference](#api-reference)
 - [Machine Learning](#machine-learning)
 - [Frontend Pages](#frontend-pages)
@@ -146,10 +145,6 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Copy and fill in environment variables
-cp .env.example .env
-# Edit .env with your keys (see Environment Variables section)
-
 # Start the development server
 uvicorn Backend.main:app --reload --port 8000
 ```
@@ -162,45 +157,11 @@ cd frontend-new
 # Install dependencies
 npm install
 
-# Copy and fill in environment variables
-cp .env.local.example .env.local
-# Edit .env.local with your keys
-
 # Start the development server
 npm run dev
 ```
 
-The frontend will be available at `http://localhost:3000` and will proxy `/api/*` requests to your backend.
-
----
-
-## Environment Variables
-
-> **Never commit `.env` or `.env.local` to version control.** Use your hosting provider's secret manager for production values.
-
-### Backend — `.env`
-
-| Variable | Required | Description |
-|---|---|---|
-| `DATABASE_URL` |  | Supabase PostgreSQL connection string |
-| `SUPABASE_URL` |  | Supabase project URL |
-| `SUPABASE_ANON_KEY` |  | Supabase anonymous (publishable) key |
-| `SUPABASE_SERVICE_ROLE_KEY` |  | Supabase service role key (server-side user creation) |
-| `SECRET_KEY` |  | Random secret string for JWT signing |
-| `WAQI_TOKEN` |  | WAQI API token for real-time AQI data |
-| `GEMINI_API_KEY` |  | Google Gemini API key for AI insights |
-| `ENABLE_AUTO_INGESTION` |  | `true` to run hourly ingestion job (default: `true`) |
-| `INGESTION_INTERVAL_MINUTES` |  | Ingestion frequency in minutes (default: `60`) |
-| `ENABLE_AUTO_RETRAINING` |  | `true` to retrain model nightly (default: `false`) |
-| `RETRAINING_HOUR` |  | UTC hour for nightly retraining (default: `3`) |
-
-### Frontend — `.env.local`
-
-| Variable | Description |
-|---|---|
-| `NEXT_PUBLIC_API_URL` | Your deployed backend URL |
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous key |
+The frontend runs on `http://localhost:3000` and proxies `/api/*` requests to the backend.
 
 ---
 
@@ -401,7 +362,6 @@ skyly/
  requirements.txt              # Python dependencies
  render.yaml                   # Render deployment config
  render_start.sh               # Gunicorn start script
- .env.example                  # Environment variable template
  .gitignore
 ```
 
@@ -409,4 +369,4 @@ skyly/
 
 ## License
 
-This project is for educational and portfolio purposes.
+MIT
