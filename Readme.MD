@@ -365,8 +365,3 @@ skyly/
  .gitignore
 ```
 
----
-
-## License
-
-MIT
